@@ -822,7 +822,7 @@ if __name__ =='__main__':
     parser.add_argument("--logdir", type=str, default="logs")
     parser.add_argument("--savedir",type=str,default="savedir")
     parser.add_argument("--batch_size",type=int, default=64)
-    parser.add_argument("--seq_len",type=int,default=50)
+    parser.add_argument("--seq_len",type=int,default=100)
     parser.add_argument("--hidden_size",type=int,default=1056)
     parser.add_argument("--n_inference_steps",type=int, default=300)
     parser.add_argument("--inference_learning_rate",type=float,default=0.02)

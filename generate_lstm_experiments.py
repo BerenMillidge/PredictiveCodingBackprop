@@ -11,7 +11,6 @@ base_call = "python lstm.py" + " --network_type " + network_type
 output_file = open(generated_name, "w")
 seeds = 5
 learning_rates = [0.0005,0.0001,0.001,0.005,0.00005]
-exp_name = "no_embed_run2"
 for s in range(seeds):
     lpath = log_path + "/"+str(exp_name) + "/" + str(s)
     spath = save_path + "/" + str(exp_name) + "/" + str(s)

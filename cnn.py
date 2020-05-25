@@ -227,8 +227,8 @@ class Backprop_CNN(object):
 
 
 if __name__ == '__main__':
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     global DEVICE
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     parser = argparse.ArgumentParser()
     print("Initialized")
     #parsing arguments

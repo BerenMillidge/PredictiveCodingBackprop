@@ -227,7 +227,8 @@ class Backprop_CNN(object):
 
 
 if __name__ == '__main__':
-    global DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    global DEVICE
     parser = argparse.ArgumentParser()
     print("Initialized")
     #parsing arguments
@@ -289,8 +290,10 @@ if __name__ == '__main__':
     #layers =[l1,l2,l3,l4,l5,l6,l7,l8]
     if args.network_type == "pc":
         net = PCNet(layers,args.n_inference_steps,args.inference_learning_rate,device=DEVICE)
-    else:
+    elif args.network_type == "backprop":
         net = Backprop_CNN(layers)
+    else:
+        raise Exception("Network type not recognised: must be one of 'backprop', 'pc'")
     net.train(dataset[0:-2],testset[0:-2],args.N_epochs,args.n_inference_steps,args.savedir,args.logdir,args.old_savedir,args.save_every,args.print_every)
 
 

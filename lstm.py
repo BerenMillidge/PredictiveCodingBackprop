@@ -355,7 +355,7 @@ class PC_LSTM(object):
           if print_loss==True and i % print_every == 0:
             loss = np.sum(np.array([torch.sum((self.mu_y[t]-target_seq[t])**2).item() for t in range(len(input_seq))]))
             print("Loss Epoch " + str(n) + " batch " + str(i) + ": " + str(loss))
-            acc = accuracy(self,target_seq)
+            acc = sequence_accuracy(self,target_seq)
             print("Accuracy: ", acc)
             losses.append(loss)
             accs.append(acc)
@@ -737,7 +737,7 @@ class Backprop_LSTM(object):
             print("mu_y: ", self.mu_y[0][0:10,0])
             print("target",target_seq[0][0:10,0])
             print("Loss Epoch " + str(n) + " batch " + str(i) + ": " + str(loss))
-            acc =  accuracy(self,target_seq)
+            acc =  sequence_accuracy(self,target_seq)
             print("Accuracy: ",acc)
             losses.append(loss)
             accs.append(acc)
@@ -796,7 +796,7 @@ class Backprop_LSTM(object):
         for pred_y,targ in zip(pred_ys,target_seq):
           L += torch.sum((pred_y - targ)**2)
         print("Loss: ", L)
-        acc = accuracy(self,target_seq)
+        acc = sequence_accuracy(self,target_seq)
         print("Accuracy: ", acc)
         L.backward() 
         optimizer.step()

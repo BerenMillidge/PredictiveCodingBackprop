@@ -195,7 +195,7 @@ class Backprop_CNN(object):
         accs.append(acc)
     return np.mean(np.array(accs)),accs
 
-  def train(self, dataset,testset,n_epochs,savedir,logdir,old_savedir="",print_every=100,save_every=1):
+  def train(self, dataset,testset,n_epochs,n_inference_steps,savedir,logdir,old_savedir="",print_every=100,save_every=1):
     if old_savedir != "None":
         self.load_model(old_savedir)
     with torch.no_grad():

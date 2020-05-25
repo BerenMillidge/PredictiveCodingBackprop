@@ -9,6 +9,9 @@ from copy import deepcopy
 import math
 import matplotlib.pyplot as plt
 
+global DEVICE
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 def boolcheck(x):
     return str(x).lower() in ["true", "1", "yes"]
 

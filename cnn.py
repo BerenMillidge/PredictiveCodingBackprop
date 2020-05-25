@@ -31,6 +31,7 @@ class PCNet(object):
     self.mus = [[] for i in range(self.L+1)]
     self.numerical_check = numerical_check
     if self.numerical_check:
+      print("Numerical Check Activated!")
       for l in self.layers:
         l.set_weight_parameters()
 
@@ -49,7 +50,7 @@ class PCNet(object):
           print("dW: ", dW*2)
           print("true diffs: ", true_dW * 2)
           if self.numerical_check:
-            print("true weights ", true_weight_grad))
+            print("true weights ", true_weight_grad)
     return weight_diffs
 
 

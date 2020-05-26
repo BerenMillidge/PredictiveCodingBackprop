@@ -32,7 +32,7 @@ class ConvLayer(object):
     self.activations = out.reshape(self.batch_size, self.num_filters, self.output_size, self.output_size)
     return self.f(self.activations)
 
-  def update_weights(self,e,update_weights=False):
+  def update_weights(self,e,update_weights=False,sign_reverse=False):
     fn_deriv = self.df(self.activations)
     e = e * fn_deriv
     self.dout = e.reshape(self.batch_size,self.num_filters,-1)
@@ -40,7 +40,10 @@ class ConvLayer(object):
     dW = torch.sum(dW,dim=0)
     dW = dW.reshape((self.num_filters,self.num_channels,self.kernel_size,self.kernel_size))
     if update_weights:
-      self.kernel += self.learning_rate * torch.clamp(dW * 2,-50,50)
+      if sign_reverse==True:
+        self.kernel -= self.learning_rate * torch.clamp(dW * 2,-50,50)
+      else:
+        self.kernel += self.learning_rate * torch.clamp(dW * 2,-50,50)
     return dW
 
   def backward(self,e):
@@ -78,7 +81,7 @@ class MaxPool(object):
   def backward(self, y):
     return F.max_unpool2d(y,self.idxs, self.kernel_size)
 
-  def update_weights(self,e,update_weights=False):
+  def update_weights(self,e,update_weights=False,sign_reverse=False):
     return 0
 
   def get_true_weight_grad(self):
@@ -108,7 +111,7 @@ class AvgPool(object):
     print("in backward: ", y.shape)
     return F.interpolate(y,scale_factor=(1,1,self.kernel_size,self.kernel_size))
 
-  def update_weights(self,x):
+  def update_weights(self,e,update_weights=False, sign_reverse=False):
     return 0
 
   def save_layer(self,logdir,i):
@@ -143,12 +146,15 @@ class ProjectionLayer(object):
     out = out.reshape((len(e), self.C, self.H, self.W))
     return torch.clamp(out,-50,50)
 
-  def update_weights(self, e,update_weights=False):
+  def update_weights(self, e,update_weights=False,sign_reverse=False):
     out = self.inp.reshape((len(self.inp), -1))
     fn_deriv = self.df(self.activations)
     dw = torch.matmul(out.T, e * fn_deriv)
     if update_weights:
-      self.weights += self.learning_rate * torch.clamp((dw * 2),-50,50)
+      if sign_reverse==True:
+        self.weights -= self.learning_rate * torch.clamp((dw * 2),-50,50)
+      else:
+        self.weights += self.learning_rate * torch.clamp((dw * 2),-50,50)
     return dw
 
   def get_true_weight_grad(self):
@@ -186,14 +192,17 @@ class FCLayer(object):
     out = torch.matmul(e * self.fn_deriv, self.weights.T)
     return torch.clamp(out,-50,50)
 
-  def update_weights(self,e,update_weights=False):
+  def update_weights(self,e,update_weights=False,sign_reverse=False):
     self.fn_deriv = self.df(self.activations)
     #print("fnderiv: ", self.fn_deriv.shape)
     #print("inp: ", self.inp.T.shape)
     #print("inputs; ", e.shape)
     dw = torch.matmul(self.inp.T, e * self.fn_deriv)
     if update_weights:
-      self.weights += self.learning_rate * torch.clamp(dw*2,-50,50)
+      if sign_reverse==True:
+        self.weights -= self.learning_rate * torch.clamp(dw*2,-50,50)
+      else: 
+        self.weights += self.learning_rate * torch.clamp(dw*2,-50,50)
     return dw
 
   def get_true_weight_grad(self):

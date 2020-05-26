@@ -163,9 +163,9 @@ class Backprop_CNN(object):
       self.e_ys[i] = l.backward(self.e_ys[i+1])
     return self.e_ys[0]
 
-  def update_weights(self,print_weight_grads=False,update_weight=False):
+  def update_weights(self,print_weight_grads=False,update_weight=False,sign_reverse=False):
     for (i,l) in enumerate(self.layers):
-      dW = l.update_weights(self.e_ys[i+1],update_weights=update_weight)
+      dW = l.update_weights(self.e_ys[i+1],update_weights=update_weight,sign_reverse=sign_reverse)
       if print_weight_grads:
         print("weight grads : ", i)
         print("dW: ", dW*2)
@@ -210,7 +210,7 @@ class Backprop_CNN(object):
           label = onehot(label).to(DEVICE)
           e_y = out - label
           self.backward(e_y)
-          self.update_weights(update_weight=True)
+          self.update_weights(update_weight=True,sign_reverse=True)
           loss = torch.sum(e_y**2).item()
           losslist.append(loss)
         mean_acc, acclist = self.test_accuracy(dataset)

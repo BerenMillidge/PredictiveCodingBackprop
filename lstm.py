@@ -859,7 +859,7 @@ if __name__ =='__main__':
     #define networks
     if args.network_type == "pc":
         net = PC_LSTM(input_size, hidden_size,output_size,vocab_size,batch_size,inference_learning_rate,weight_learning_rate,n_inference_steps)
-    if args.network_type == "backprop":
+    elif args.network_type == "backprop":
         net = Backprop_LSTM(input_size,hidden_size,output_size,vocab_size,batch_size,weight_learning_rate)
     else:
         raise Exception("Unknown network type entered")

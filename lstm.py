@@ -333,7 +333,7 @@ class PC_LSTM(object):
         embed = np.load(save_dir +"/embed_0.npy")
         self.embed.weight = nn.Parameter(set_tensor(torch.from_numpy(embed)))
 
-  def train(self,dataset,n_epochs,logdir,savedir,print_loss=True,sample_char=True,print_every=20,old_savedir="None",init_embed_path="None"):
+  def train(self,dataset,n_epochs,logdir,savedir,old_savedir="None",init_embed_path="None",save_every=10):
     #load initial embedding from backprop version
     if old_savedir == "None" and init_embed_path != "None":
         embed = np.load(init_embed_path)
@@ -343,7 +343,7 @@ class PC_LSTM(object):
     with torch.no_grad():
       losses = []
       accs = []
-      output_file = open(logdir+"/output.txt","w")
+      output_file = open(logdir +"/output.txt", "w")
       for n in range(n_epochs):
         print("Epoch: ", n)
         for (i, (input_seq, target_seq)) in enumerate(dataset):
@@ -352,22 +352,18 @@ class PC_LSTM(object):
           pred_ys = self.forward(input_seq)
           self.backward(input_seq, target_seq)
           self.update_parameters()
-          if print_loss==True and i % print_every == 0:
+          if i % save_every == 0:
             loss = np.sum(np.array([torch.sum((self.mu_y[t]-target_seq[t])**2).item() for t in range(len(input_seq))]))
             print("Loss Epoch " + str(n) + " batch " + str(i) + ": " + str(loss))
             acc = sequence_accuracy(self,target_seq)
             print("Accuracy: ", acc)
             losses.append(loss)
             accs.append(acc)
-            sample_random = str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True))
-            sample_maxprob = str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False))
-            print("SAMPLED TEXT : " + sample_random)
-            print("SAMPLED TEXT : " + sample_maxprob)
-            print("SAMPLED TEXT : " + sample_random,file=output_file)
-            print("SAMPLED TEXT : " + sample_maxprob,file=output_file)
-
-        print("FINISHED EPOCH: " + str(n) + " SAVING MODEL")
-        self.save_model(logdir, savedir,losses,accs)
+            print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)),file=output_file)
+            print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)),file=output_file)
+          if i % 200 == 0:
+            print("FINISHED EPOCH: " + str(n) + " SAVING MODEL")
+            self.save_model(logdir, savedir,losses,accs)
             
 
 
@@ -631,48 +627,26 @@ class Backprop_LSTM(object):
       output_str+=char
     return output_str
 
-  def save_model(self, logdir, savedir,save_numpy=True,losses=None, accs=None):
-      #save weights
-      #I could try and save numpy which might be best at first
-    if save_numpy:
-        np.save(logdir + "/Wf.npy", self.Wf.detach().cpu().numpy())
-        np.save(logdir + "/Wi.npy", self.Wi.detach().cpu().numpy())
-        np.save(logdir + "/Wc.npy", self.Wc.detach().cpu().numpy())
-        np.save(logdir + "/Wo.npy", self.Wo.detach().cpu().numpy())
-        np.save(logdir + "/Wy.npy", self.Wy.detach().cpu().numpy())
+  def save_model(self, logdir, savedir,losses=None, accs=None):
+    np.save(logdir + "/Wf.npy", self.Wf.detach().cpu().numpy())
+    np.save(logdir + "/Wi.npy", self.Wi.detach().cpu().numpy())
+    np.save(logdir + "/Wc.npy", self.Wc.detach().cpu().numpy())
+    np.save(logdir + "/Wo.npy", self.Wo.detach().cpu().numpy())
+    np.save(logdir + "/Wy.npy", self.Wy.detach().cpu().numpy())
 
-        np.save(logdir + "/bf.npy", self.bf.detach().cpu().numpy())
-        np.save(logdir + "/bi.npy", self.bi.detach().cpu().numpy())
-        np.save(logdir + "/bc.npy", self.bc.detach().cpu().numpy())
-        np.save(logdir + "/bo.npy", self.bo.detach().cpu().numpy())
-        np.save(logdir + "/by.npy", self.by.detach().cpu().numpy())
+    np.save(logdir + "/bf.npy", self.bf.detach().cpu().numpy())
+    np.save(logdir + "/bi.npy", self.bi.detach().cpu().numpy())
+    np.save(logdir + "/bc.npy", self.bc.detach().cpu().numpy())
+    np.save(logdir + "/bo.npy", self.bo.detach().cpu().numpy())
+    np.save(logdir + "/by.npy", self.by.detach().cpu().numpy())
 
-        np.save(logdir + "/init_h.npy", self.init_h.detach().cpu().numpy())
-        np.save(logdir + "/init_cell.npy", self.init_cell.detach().cpu().numpy())
-        #save all the embedding parameters
-        embed_params = list(self.embed.parameters())
-        for (i,p) in enumerate(embed_params):
-            np.save(logdir + "/embed_"+str(i)+".npy",p.detach().cpu().numpy())
-    else:
-        state_dict = {}
-        state_dict["Wf"] = self.Wf
-        state_dict["Wi"] = self.Wi
-        state_dict["Wc"] = self.Wc
-        state_dict["Wo"] = self.Wo
-        state_dict["Wy"] = self.Wy
-        #biases
-        state_dict["bf"] = self.bf
-        state_dict["bi"] = self.bi
-        state_dict["bc"] = self.bc
-        state_dict["bo"] = self.bo
-        state_dict["by"] = self.by
-
-        #misc
-        state_dict["init_h"] = self.init_h
-        state_dict["init_cell"] = self.init_cell
-        state_dict["embed"] = self.embed 
-        torch.save(state_dict, logdir + "/")
-            
+    np.save(logdir + "/init_h.npy", self.init_h.detach().cpu().numpy())
+    np.save(logdir + "/init_cell.npy", self.init_cell.detach().cpu().numpy())
+    #save all the embedding parameters
+    embed_params = list(self.embed.parameters())
+    for (i,p) in enumerate(embed_params):
+        np.save(logdir + "/embed_"+str(i)+".npy",p.detach().cpu().numpy())
+        
     #SAVE the results to the edinburgh computer from scratch space to main space
     if losses is not None:
         np.save(logdir+ "/losses.npy", np.array(losses))
@@ -716,45 +690,6 @@ class Backprop_LSTM(object):
         embed = np.load(save_dir +"/embed_0.npy")
         self.embed.weight = nn.Parameter(set_tensor(torch.from_numpy(embed)))
 
-
-  def train_old(self, dataset,n_epochs,logdir, savedir, print_loss=True,sample_char=True,save_every=20,old_savedir="None",init_embed_path="None"):
-    if init_embed_path != "None":
-      embed = np.load(init_embed_path)
-      self.embed_weight = nn.Parameter(set_tensor(torch.from_numpy(embed)))
-    with torch.no_grad():
-      losses = []
-      accs = []
-      for n in range(n_epochs):
-        print("Epoch: ", n)
-        for (i, (input_seq, target_seq)) in enumerate(dataset):
-          input_seq = list(set_tensor(torch.from_numpy(onehot(input_seq,self.vocab_size)).float().permute(2,1,0)))
-          target_seq = list(set_tensor(torch.from_numpy(onehot(target_seq, self.vocab_size)).float().permute(2,1,0)))
-          self.forward(input_seq)
-          self.backward(input_seq, target_seq)
-          self.update_parameters()
-          if print_loss:
-            loss = np.sum(np.array([torch.sum((self.mu_y[t]-target_seq[t])**2).item() for t in range(len(input_seq))]))
-            print("mu_y: ", self.mu_y[0][0:10,0])
-            print("target",target_seq[0][0:10,0])
-            print("Loss Epoch " + str(n) + " batch " + str(i) + ": " + str(loss))
-            acc =  sequence_accuracy(self,target_seq)
-            print("Accuracy: ",acc)
-            losses.append(loss)
-            accs.append(acc)
-                  
-          print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)))
-          print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)))
-          #only save after each n goes to save a bit of space wil still get PLENTY of results
-          if i % save_every == 0:
-            losses.append(L.item())
-            accs.append(acc)
-            print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)),file=output_file)
-            print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)),file=output_file)
-    
-        #save model after each epoch
-        print("FINISHED EPOCH: " + str(n) + " SAVING MODEL")
-        self.save_model(logdir, savedir,losses,accs)
-
   def net_set_parameters(self):
     #weight parameters
     self.Wf = nn.Parameter(self.Wf)
@@ -773,7 +708,7 @@ class Backprop_LSTM(object):
     self.init_h = nn.Parameter(self.init_h)
     self.init_cell = nn.Parameter(self.init_cell)
 
-  def train(self, dataset,n_epochs,logdir, savedir, print_loss=True,sample_char=True,save_every=20,old_savedir="",init_embed_path = "None"):
+  def train(self, dataset,n_epochs,logdir, savedir,old_savedir="",init_embed_path = "None",save_every=20):
     if old_savedir != "None":
         self.load_model(old_savedir)
     self.net_set_parameters()
@@ -800,18 +735,18 @@ class Backprop_LSTM(object):
         print("Accuracy: ", acc)
         L.backward() 
         optimizer.step()
-        print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)))
-        print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)))
+        #print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)))
+        #print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)))
         #only save after each n goes to save a bit of space wil still get PLENTY of results
         if i % save_every == 0:
             losses.append(L.item())
             accs.append(acc)
             print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)),file=output_file)
             print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)),file=output_file)
-    
-      #save model after each epoch
-      print("FINISHED EPOCH: " + str(n) + " SAVING MODEL")
-      self.save_model(logdir, savedir,losses,accs)
+        if i % 200 == 0:
+            #save model after each epoch
+            print("FINISHED EPOCH: " + str(n) + " SAVING MODEL")
+            self.save_model(logdir, savedir,losses,accs)
 
 print("reached end of file before")
 
@@ -822,13 +757,13 @@ if __name__ =='__main__':
     parser.add_argument("--logdir", type=str, default="logs")
     parser.add_argument("--savedir",type=str,default="savedir")
     parser.add_argument("--batch_size",type=int, default=64)
-    parser.add_argument("--seq_len",type=int,default=100)
+    parser.add_argument("--seq_len",type=int,default=50)
     parser.add_argument("--hidden_size",type=int,default=1056)
-    parser.add_argument("--n_inference_steps",type=int, default=300)
-    parser.add_argument("--inference_learning_rate",type=float,default=0.02)
+    parser.add_argument("--n_inference_steps",type=int, default=200)
+    parser.add_argument("--inference_learning_rate",type=float,default=0.1)
     parser.add_argument("--weight_learning_rate",type=float,default=0.0001)
     parser.add_argument("--N_epochs",type=int, default=10000)
-    parser.add_argument("--save_every",type=int, default=200)
+    parser.add_argument("--save_every",type=int, default=1)
     parser.add_argument("--sample_every",type=int,default=200)
     parser.add_argument("--network_type",type=str,default="backprop")
     parser.add_argument("--sample_char",type=boolcheck,default="True")
@@ -858,12 +793,12 @@ if __name__ =='__main__':
 
     #define networks
     if args.network_type == "pc":
-        net = PC_LSTM(input_size, hidden_size,output_size,vocab_size,batch_size,inference_learning_rate,weight_learning_rate,n_inference_steps)
+        net = PC_LSTM(input_size, hidden_size,output_size,vocab_size,batch_size,inference_learning_rate,weight_learning_rate/2,n_inference_steps)
     elif args.network_type == "backprop":
         net = Backprop_LSTM(input_size,hidden_size,output_size,vocab_size,batch_size,weight_learning_rate)
     else:
         raise Exception("Unknown network type entered")
 
     #train!
-    net.train(dataset, int(n_epochs),args.logdir, args.savedir,sample_char=args.sample_char,old_savedir=args.old_savedir,init_embed_path = args.init_embed_path)
+    net.train(dataset, int(n_epochs),args.logdir, args.savedir,old_savedir=args.old_savedir,init_embed_path = args.init_embed_path,save_every=args.save_every)
 

@@ -27,6 +27,7 @@ class PC_LSTM(object):
     self.batch_size = batch_size 
     self.inference_learning_rate = inference_learning_rate 
     self.weight_learning_rate = weight_learning_rate
+    self.clamp_val = 100
     self.weight_init = weight_init
     self.bias_init = bias_init
     self.n_inference_steps_train = n_inference_steps_train 
@@ -161,17 +162,16 @@ class PC_LSTM(object):
 
   def update_parameters(self):
     #update weights
-    self.Wf -= 1 * self.weight_learning_rate * self.dWf
-    self.Wi -= 1 * self.weight_learning_rate * self.dWi
-    self.Wc -= 1 * self.weight_learning_rate * self.dWc
-    self.Wo -= 1 * self.weight_learning_rate * self.dWo
-    self.Wy -= 1 * self.weight_learning_rate * self.dWy
+    self.Wi += 1 * self.learning_rate * torch.clamp(self.dWi,min=-self.clamp_val,max=self.clamp_val)
+    self.Wc += 1 * self.learning_rate * torch.clamp(self.dWc,min=-self.clamp_val,max=self.clamp_val)
+    self.Wo += 1 * self.learning_rate * torch.clamp(self.dWo,min=-self.clamp_val,max=self.clamp_val)
+    self.Wy += 1 * self.learning_rate * torch.clamp(self.dWy,min=-self.clamp_val,max=self.clamp_val)
     #update biases
-    self.bf -= self.weight_learning_rate * self.dbf
-    self.bi -= self.weight_learning_rate * self.dbi
-    self.bc -= self.weight_learning_rate * self.dbc
-    self.bo -= self.weight_learning_rate * self.dbo
-    self.by -= self.weight_learning_rate * self.dby
+    self.bf += self.learning_rate * torch.clamp(self.dbf,min=-self.clamp_val,max=self.clamp_val)
+    self.bi += self.learning_rate * torch.clamp(self.dbi,min=-self.clamp_val,max=self.clamp_val)
+    self.bc += self.learning_rate * torch.clamp(self.dbc,min=-self.clamp_val,max=self.clamp_val)
+    self.bo += self.learning_rate * torch.clamp(self.dbo,min=-self.clamp_val,max=self.clamp_val)
+    self.by += self.learning_rate * torch.clamp(self.dby,min=-self.clamp_val,max=self.clamp_val)
     #zero gradients
     self.zero_gradients()
 

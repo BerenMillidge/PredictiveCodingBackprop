@@ -118,7 +118,7 @@ class PCNet(object):
       accs.append(mean_acc)
       mean_loss = np.mean(np.array(losslist))
       losses.append(mean_loss)
-      mean_test_acc, test_accs = self.test_accuracy(testset)
+      mean_test_acc, _ = self.test_accuracy(testset)
       test_accs.append(mean_test_acc)
       weight_diffs_list.append(weight_diffs)
       print("TEST ACCURACY: ", mean_test_acc)

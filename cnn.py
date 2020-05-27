@@ -240,7 +240,7 @@ if __name__ == '__main__':
     parser.add_argument("--save_every",type=int, default=1)
     parser.add_argument("--print_every",type=int,default=10)
     parser.add_argument("--old_savedir",type=str,default="None")
-    parser.add_argument("--n_inference_steps",type=int,default=50)
+    parser.add_argument("--n_inference_steps",type=int,default=100)
     parser.add_argument("--inference_learning_rate",type=float,default=0.1)
     parser.add_argument("--network_type",type=str,default="pc")
     parser.add_argument("--dataset",type=str,default="cifar")

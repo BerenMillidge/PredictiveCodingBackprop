@@ -27,7 +27,7 @@ class PC_LSTM(object):
     self.batch_size = batch_size 
     self.inference_learning_rate = inference_learning_rate 
     self.weight_learning_rate = weight_learning_rate
-    self.clamp_val = 100
+    self.clamp_val = 50
     self.weight_init = weight_init
     self.bias_init = bias_init
     self.n_inference_steps_train = n_inference_steps_train 
@@ -284,8 +284,8 @@ class PC_LSTM(object):
     np.save(logdir + "/bo.npy", self.bo.detach().cpu().numpy())
     np.save(logdir + "/by.npy", self.by.detach().cpu().numpy())
 
-    np.save(logdir + "/init_h.npy", self.init_h.detach().cpu().numpy())
-    np.save(logdir + "/init_cell.npy", self.init_cell.detach().cpu().numpy())
+    #np.save(logdir + "/init_h.npy", self.init_h.detach().cpu().numpy())
+    #np.save(logdir + "/init_cell.npy", self.init_cell.detach().cpu().numpy())
     #save all the embedding parameters
     embed_params = list(self.embed.parameters())
     for (i,p) in enumerate(embed_params):
@@ -325,10 +325,10 @@ class PC_LSTM(object):
         by = np.load(save_dir+"/by.npy")
         self.by = set_tensor(torch.from_numpy(by))
 
-        init_h = np.load(save_dir + "/init_h.npy")
-        self.init_h = set_tensor(torch.from_numpy(init_h))
-        init_cell = np.load(save_dir + "/init_cell.npy")
-        self.init_cell = set_tensor(torch.from_numpy(init_cell))
+        #init_h = np.load(save_dir + "/init_h.npy")
+        #self.init_h = set_tensor(torch.from_numpy(init_h))
+        #init_cell = np.load(save_dir + "/init_cell.npy")
+        #self.init_cell = set_tensor(torch.from_numpy(init_cell))
 
         embed = np.load(save_dir +"/embed_0.npy")
         self.embed.weight = nn.Parameter(set_tensor(torch.from_numpy(embed)))

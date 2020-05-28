@@ -139,7 +139,7 @@ class PC_RNN(object):
           self.load_model(savedir)
       for n in range(n_epochs):
         print("Epoch: ",n)
-        for (inp, target) in dataset:
+        for i,(inp, target) in enumerate(dataset):
           input_seq = set_tensor(torch.from_numpy(onehot(inp.reshape(seq_length,self.batch_size),self.vocab_size)))
           target_seq = set_tensor(torch.from_numpy(onehot(target.reshape(seq_length,self.batch_size),self.vocab_size)))
           self.forward_sweep(input_seq)
@@ -257,7 +257,7 @@ class Backprop_RNN(object):
           self.load_model(savedir)
       for n in range(n_epochs):
         print("Epoch: ",n)
-        for (inp, target) in dataset:
+        for i,(inp, target) in enumerate(dataset):
           input_seq = set_tensor(torch.from_numpy(onehot(inp.reshape(seq_length,self.batch_size),self.vocab_size)))
           target_seq = set_tensor(torch.from_numpy(onehot(target.reshape(seq_length,self.batch_size),self.vocab_size)))
           self.forward_sweep(input_seq)

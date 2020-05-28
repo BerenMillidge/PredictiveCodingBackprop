@@ -137,6 +137,8 @@ class PC_RNN(object):
     with torch.no_grad():
       if old_savedir != "None":
           self.load_model(savedir)
+      losses = []
+      accs =[]
       for n in range(n_epochs):
         print("Epoch: ",n)
         for i,(inp, target) in enumerate(dataset):
@@ -255,6 +257,8 @@ class Backprop_RNN(object):
     with torch.no_grad():
       if old_savedir != "None":
           self.load_model(savedir)
+      losses = []
+      accs = []
       for n in range(n_epochs):
         print("Epoch: ",n)
         for i,(inp, target) in enumerate(dataset):

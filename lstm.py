@@ -333,7 +333,7 @@ class PC_LSTM(object):
         embed = np.load(save_dir +"/embed_0.npy")
         self.embed.weight = nn.Parameter(set_tensor(torch.from_numpy(embed)))
 
-  def train(self,dataset,n_epochs,logdir,savedir,old_savedir="None",init_embed_path="None",save_every=10):
+  def train(self,dataset,n_epochs,logdir,savedir,old_savedir="None",init_embed_path="None",save_every=20):
     #load initial embedding from backprop version
     if old_savedir == "None" and init_embed_path != "None":
         embed = np.load(init_embed_path)
@@ -380,29 +380,29 @@ class Backprop_LSTM(object):
     self.bias_init = bias_init
     self.z_dim = self.input_dim + self.hidden_dim
     #initialize weights
-    self.Wf = set_tensor(self.std_uniform_init(torch.empty([self.hidden_dim, self.z_dim]))) * 10
-    self.Wi = set_tensor(self.std_uniform_init(torch.empty([self.hidden_dim, self.z_dim]))) * 10
-    self.Wc = set_tensor(self.std_uniform_init(torch.empty([self.hidden_dim, self.z_dim]))) * 10
-    self.Wo = set_tensor(self.std_uniform_init(torch.empty([self.hidden_dim, self.z_dim]))) * 10
-    self.Wy = set_tensor(self.std_uniform_init(torch.empty([self.output_dim, self.hidden_dim]))) * 10
-    self.embed = set_tensor(self.std_uniform_init(torch.empty([self.z_dim, self.z_dim]))) 
+    #self.Wf = set_tensor(self.std_uniform_init(torch.empty([self.hidden_dim, self.z_dim]))) * 10
+    #self.Wi = set_tensor(self.std_uniform_init(torch.empty([self.hidden_dim, self.z_dim]))) * 10
+    #self.Wc = set_tensor(self.std_uniform_init(torch.empty([self.hidden_dim, self.z_dim]))) * 10
+    #self.Wo = set_tensor(self.std_uniform_init(torch.empty([self.hidden_dim, self.z_dim]))) * 10
+    #self.Wy = set_tensor(self.std_uniform_init(torch.empty([self.output_dim, self.hidden_dim]))) * 10
+    #self.embed = set_tensor(self.std_uniform_init(torch.empty([self.z_dim, self.z_dim]))) 
     #
-    #self.Wf = set_tensor(torch.from_numpy(np.random.normal(0,0.05,[self.hidden_dim, self.z_dim])))
-    #self.Wi = set_tensor(torch.from_numpy(np.random.normal(0,0.05,[self.hidden_dim, self.z_dim])))
-    #self.Wc = set_tensor(torch.from_numpy(np.random.normal(0,0.05,[self.hidden_dim, self.z_dim])))
-    #self.Wo = set_tensor(torch.from_numpy(np.random.normal(0,0.05,[self.hidden_dim, self.z_dim])))
-    #self.Wy = set_tensor(torch.from_numpy(np.random.normal(0,0.05,[self.output_dim, self.hidden_dim])))
+    self.Wf = set_tensor(torch.from_numpy(np.random.normal(0,0.05,[self.hidden_dim, self.z_dim])))
+    self.Wi = set_tensor(torch.from_numpy(np.random.normal(0,0.05,[self.hidden_dim, self.z_dim])))
+    self.Wc = set_tensor(torch.from_numpy(np.random.normal(0,0.05,[self.hidden_dim, self.z_dim])))
+    self.Wo = set_tensor(torch.from_numpy(np.random.normal(0,0.05,[self.hidden_dim, self.z_dim])))
+    self.Wy = set_tensor(torch.from_numpy(np.random.normal(0,0.05,[self.output_dim, self.hidden_dim])))
     #initialize biases 
-    self.bf = set_tensor(self.std_uniform_init(torch.empty(([self.hidden_dim,1]))))
-    self.bi = set_tensor(self.std_uniform_init(torch.empty(([self.hidden_dim,1]))))
-    self.bc = set_tensor(self.std_uniform_init(torch.empty(([self.hidden_dim,1]))))
-    self.bo = set_tensor(self.std_uniform_init(torch.empty(([self.hidden_dim,1]))))
-    self.by = set_tensor(self.std_uniform_init(torch.empty(([self.output_dim,1]))))
-    #self.bf = set_tensor(torch.zeros((self.hidden_dim,1)))
-    #self.bi = set_tensor(torch.zeros((self.hidden_dim,1)))
-    #self.bc = set_tensor(torch.zeros((self.hidden_dim,1)))
-    #self.bo = set_tensor(torch.zeros((self.hidden_dim,1)))
-    #self.by = set_tensor(torch.zeros((self.output_dim,1)))
+    #self.bf = set_tensor(self.std_uniform_init(torch.empty(([self.hidden_dim,1]))))
+    #self.bi = set_tensor(self.std_uniform_init(torch.empty(([self.hidden_dim,1]))))
+    #self.bc = set_tensor(self.std_uniform_init(torch.empty(([self.hidden_dim,1]))))
+    #self.bo = set_tensor(self.std_uniform_init(torch.empty(([self.hidden_dim,1]))))
+    #self.by = set_tensor(self.std_uniform_init(torch.empty(([self.output_dim,1]))))
+    self.bf = set_tensor(torch.zeros((self.hidden_dim,1)))
+    self.bi = set_tensor(torch.zeros((self.hidden_dim,1)))
+    self.bc = set_tensor(torch.zeros((self.hidden_dim,1)))
+    self.bo = set_tensor(torch.zeros((self.hidden_dim,1)))
+    self.by = set_tensor(torch.zeros((self.output_dim,1)))
     self.zero_gradients()
     self.init_h = set_tensor(torch.empty([self.hidden_dim, self.batch_size]).normal_(mean=0.0,std=0.05))
     self.init_cell = set_tensor(torch.empty([self.hidden_dim, self.batch_size]).normal_(mean=0.0,std=0.05))

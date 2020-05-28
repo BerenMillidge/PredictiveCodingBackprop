@@ -19,7 +19,7 @@ from datasets import *
 
 
 class PC_LSTM(object):
-  def __init__(self,input_dim, hidden_dim,output_dim,vocab_size, batch_size, inference_learning_rate,weight_learning_rate, n_inference_steps_train,weight_init=gaussian_init, bias_init=zeros_init):
+  def __init__(self,input_dim, hidden_dim,output_dim,vocab_size, batch_size, inference_learning_rate,weight_learning_rate, n_inference_steps_train,weight_init=gaussian_init, bias_init=zeros_init,use_embedding=True):
     self.input_dim = input_dim
     self.hidden_dim = hidden_dim 
     self.output_dim = output_dim
@@ -32,6 +32,7 @@ class PC_LSTM(object):
     self.bias_init = bias_init
     self.n_inference_steps_train = n_inference_steps_train 
     self.z_dim = self.input_dim + self.hidden_dim
+    self.use_embedding = use_embedding
     #initialize weights
     self.Wf = set_tensor(torch.from_numpy(np.random.normal(0,0.05,[self.hidden_dim, self.z_dim])))
     self.Wi = set_tensor(torch.from_numpy(np.random.normal(0,0.05,[self.hidden_dim, self.z_dim])))
@@ -85,8 +86,11 @@ class PC_LSTM(object):
     #cellprev = previous cell state [Hidden_size x Batch]
     #t = position in sequence [int]
     #implements the forward pass of the LSTM. Saves the predictions for later inference
-    embed = self.embed(inp).permute(1,0)
-    z = torch.cat((embed, hprev),axis=0)
+    if self.use_embedding:
+        embed = self.embed(inp).permute(1,0)
+        z = torch.cat((embed, hprev),axis=0)
+    else:
+        z = torch.cat((inp,hprev),axis=0)
     #forget gate
     self.mu_f_activations[t] = self.Wf @ z + self.bf
     self.mu_f[t] = F.sigmoid(self.mu_f_activations[t])
@@ -110,8 +114,11 @@ class PC_LSTM(object):
     # runs backward inference for a single LSTM timestep. Returns the backwards gradients
     #takes as input: inputs [Features x Batch] , labels [1 x Batch], cellprev, hprev,dc_batck, dh_back: [Hidden_size x Batch], t = timestep in seqlen [int]
     #initialize with the forward predictions
-    embed = self.embed(inp).permute(1,0)
-    z = torch.cat((embed, hprev),axis=0)
+    if self.use_embedding:
+        embed = self.embed(inp).permute(1,0)
+        z = torch.cat((embed, hprev),axis=0)
+    else:
+        z = torch.cat((inp, hprev),axis=0)
     h = self.mu_h[t].clone()
     o = self.mu_o[t].clone()
     c = self.mu_c[t].clone()
@@ -325,7 +332,10 @@ class PC_LSTM(object):
       for n in range(n_epochs):
         print("Epoch: ", n)
         for (i, (input_seq, target_seq)) in enumerate(dataset):
-          input_seq = list(torch.tensor(torch.from_numpy(input_seq.numpy()),dtype=torch.long).permute(1,0).to(DEVICE))
+          if self.use_embedding:
+            input_seq = list(torch.tensor(torch.from_numpy(input_seq.numpy()),dtype=torch.long).permute(1,0).to(DEVICE))
+          else:
+            input_seq = list(set_tensor(torch.from_numpy(onehot(input_seq, vocab_size)).float().permute(2,1,0)))
           target_seq = list(set_tensor(torch.from_numpy(onehot(target_seq, vocab_size)).float().permute(2,1,0)))
           pred_ys = self.forward(input_seq)
           self.backward(input_seq, target_seq)
@@ -346,7 +356,7 @@ class PC_LSTM(object):
 
 
 class Backprop_LSTM(object):
-  def __init__(self,input_dim, hidden_dim,output_dim,vocab_size, batch_size, learning_rate,weight_init=gaussian_init, bias_init=zeros_init):
+  def __init__(self,input_dim, hidden_dim,output_dim,vocab_size, batch_size, learning_rate,weight_init=gaussian_init, bias_init=zeros_init,use_embedding=True):
     self.input_dim = input_dim
     self.hidden_dim = hidden_dim 
     self.output_dim = output_dim
@@ -356,6 +366,7 @@ class Backprop_LSTM(object):
     self.learning_rate = learning_rate 
     self.weight_init = weight_init
     self.bias_init = bias_init
+    self.use_embedding = self.use_embedding
     self.z_dim = self.input_dim + self.hidden_dim
     #initialize weights
     #self.Wf = set_tensor(self.std_uniform_init(torch.empty([self.hidden_dim, self.z_dim]))) * 10
@@ -426,17 +437,11 @@ class Backprop_LSTM(object):
     #cellprev = previous cell state [Hidden_size x Batch]
     #t = position in sequence [int]
     #implements the forward pass of the LSTM. Saves the predictions for later inference
-    #print("inp: ", inp.shape)
-    #print("hprev: ",hprev.shape)
-    #print("embed shape: ", self.embed(inp).shape)
-    embed = self.embed(inp).permute(1,0)
-    #print("EMBED: ", embed[:,0])
-    #print("embed: ", embed.shape)
-    #print("hprev: ", hprev.shape)
-    z = torch.cat((embed, hprev),axis=0)
-    # see if a linear embedding layer helps here!
-    #z = self.embed @ z
-    #print("z: ", z.shape)
+    if self.use_embedding:
+        embed = self.embed(inp).permute(1,0)
+        z = torch.cat((embed, hprev),axis=0)
+    else:
+        z = torch.cat((inp, hprev),axis=0)
     #forget gate
     self.mu_f_activations[t] = self.Wf @ z + self.bf
     #self.mu_f[t] = torch.sigmoid(self.mu_f_activations[t])
@@ -467,23 +472,14 @@ class Backprop_LSTM(object):
     #print("mu_y: ", self.mu_y[t])
     return self.mu_y[t],self.mu_h[t], self.mu_cell[t]
 
-  def cell_forward_old(self,inp,hprev,cellprev,t):
-    # so effectively a linear layer. If this can't learn there is osmething REALLY DEEP going on here 
-    #print("inp: ", inp.shape)
-    z = torch.cat((inp, hprev),axis=0)
-    #print("wf: ", self.Wf.shape)
-    #print("z: ", z.shape)
-    #print("bf: ", self.bf.shape)
-    h = F.relu(self.Wf @ z + self.bf)
-    self.mu_y[t] = self.Wy @ h + self.by
-    #print("ypred!: ", self.mu_y[t].shape)
-    return self.mu_y[t],hprev, cellprev
-
-
   def cell_backward(self,inp,true_labels,cellprev,hprev,dc_back, dh_back,t):
     # Returns the backwards gradients for a single LSTM cell timstep
     #takes as input: inputs [Features x Batch] , labels [1 x Batch], cellprev, hprev,dc_batck, dh_back: [Hidden_size x Batch], t = timestep in seqlen [int]
-    z = torch.cat((inp, hprev),axis=0)
+    if self.use_embedding:
+        embed = self.embed(inp).permute(1,0)
+        z = torch.cat((embed, hprev),axis=0)
+    else:
+        z = torch.cat((inp, hprev),axis=0)
     #compute gradients    
     dy = true_labels - self.mu_y[t]
     dh = (self.Wy.T @ dy) + dh_back  #any activation function on the output?
@@ -699,7 +695,10 @@ class Backprop_LSTM(object):
     for n in range(n_epochs):
       print("Epoch ", n)
       for (i,(input_seq, target_seq)) in enumerate(dataset):
-        input_seq = list(torch.tensor(torch.from_numpy(input_seq.numpy()),dtype=torch.long).permute(1,0).to(DEVICE))
+        if self.use_embedding:
+            input_seq = list(torch.tensor(torch.from_numpy(input_seq.numpy()),dtype=torch.long).permute(1,0).to(DEVICE))
+        else:
+            input_seq = list(set_tensor(torch.from_numpy(onehot(input_seq, self.vocab_size)).float().permute(2,1,0)))
         target_seq = list(set_tensor(torch.from_numpy(onehot(target_seq, self.vocab_size)).float().permute(2,1,0)))
         pred_ys = self.forward(input_seq)
         optimizer.zero_grad()

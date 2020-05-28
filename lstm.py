@@ -45,6 +45,8 @@ class PC_LSTM(object):
     self.bo = set_tensor(torch.zeros((self.hidden_dim,1)))
     self.by = set_tensor(torch.zeros((self.output_dim,1)))
     self.embed = nn.Embedding(self.vocab_size, self.input_dim).to(DEVICE)
+    self.init_h = set_tensor(torch.empty([self.hidden_dim, self.batch_size]).normal_(mean=0.0,std=0.05))
+    self.init_cell = set_tensor(torch.empty([self.hidden_dim, self.batch_size]).normal_(mean=0.0,std=0.05))
     self.zero_gradients()
 
   def zero_gradients(self):
@@ -87,19 +89,19 @@ class PC_LSTM(object):
     z = torch.cat((embed, hprev),axis=0)
     #forget gate
     self.mu_f_activations[t] = self.Wf @ z + self.bf
-    self.mu_f[t] = sigmoid(self.mu_f_activations[t])
+    self.mu_f[t] = F.sigmoid(self.mu_f_activations[t])
     #input gate
     self.mu_i_activations[t] = self.Wi @ z + self.bi
-    self.mu_i[t] = sigmoid(self.mu_i_activations[t])
+    self.mu_i[t] = F.sigmoid(self.mu_i_activations[t])
     #control gate
     self.mu_c_activations[t] = self.Wc @ z + self.bc
-    self.mu_c[t] = tanh(self.mu_c_activations[t])
+    self.mu_c[t] = F.tanh(self.mu_c_activations[t])
     #output gate
     self.mu_o_activations[t] = self.Wo @ z + self.bo
-    self.mu_o[t] = sigmoid(self.mu_o_activations[t])
+    self.mu_o[t] = F.sigmoid(self.mu_o_activations[t])
 
     self.mu_cell[t] = torch.mul(self.mu_f[t], cellprev) + torch.mul(self.mu_i[t], self.mu_c[t])
-    self.mu_h[t] = torch.mul(self.mu_o[t], tanh(self.mu_cell[t]))
+    self.mu_h[t] = torch.mul(self.mu_o[t], torch.tanh(self.mu_cell[t]))
     self.mu_y[t] = self.Wy @ self.mu_h[t] + self.by
     return self.mu_y[t],self.mu_h[t], self.mu_cell[t]
 
@@ -162,6 +164,7 @@ class PC_LSTM(object):
 
   def update_parameters(self):
     #update weights
+    self.Wf -= 1 * self.weight_learning_rate * torch.clamp(self.dWf,min=-self.clamp_val,max=self.clamp_val)
     self.Wi -= 1 * self.weight_learning_rate * torch.clamp(self.dWi,min=-self.clamp_val,max=self.clamp_val)
     self.Wc -= 1 * self.weight_learning_rate * torch.clamp(self.dWc,min=-self.clamp_val,max=self.clamp_val)
     self.Wo -= 1 * self.weight_learning_rate * torch.clamp(self.dWo,min=-self.clamp_val,max=self.clamp_val)
@@ -199,8 +202,8 @@ class PC_LSTM(object):
     #I found that random initializations each time added too much noise for gradients to learn successfully
     #self.hprev[0] = init_h if init_h is not None else set_tensor(torch.empty([self.hidden_dim, self.batch_size]).normal_(mean=0,std=0.1))
     #self.cellprev[0] = init_cell if init_cell is not None else set_tensor(torch.empty([self.hidden_dim,self.batch_size]).normal_(mean=0, std=0.1))
-    self.hprev[0] = init_h if init_h is not None else set_tensor(torch.zeros([self.hidden_dim, self.batch_size]))
-    self.cellprev[0] = init_cell if init_cell is not None else set_tensor(torch.zeros([self.hidden_dim, self.batch_size]))
+    self.hprev[0] = init_h if init_h is not None else self.init_h #set_tensor(torch.zeros([self.hidden_dim, self.batch_size]))
+    self.cellprev[0] = init_cell if init_cell is not None else self.init_cell #set_tensor(torch.zeros([self.hidden_dim, self.batch_size]))
     #roll forwards
     for (t, inp) in enumerate(input_seq):
       #roll forwards across the sequence
@@ -246,31 +249,6 @@ class PC_LSTM(object):
       output_str+=char
     return output_str
 
-
-  def sample_sentence(self,input_char, n_steps,sample_char=False,init_h=None,init_cell=None,temp=20):
-    input_seq = [set_tensor(torch.zeros_like(input_char)) for i in range(n_steps)]
-    input_seq[0] = torch.tensor(input_char).reshape(1,)
-    hprev = init_h if init_h is not None else set_tensor(torch.zeros([self.hidden_dim,1]))
-    cellprev = init_cell if init_cell is not None else set_tensor(torch.zeros([self.hidden_dim,1]))
-    output_str = ""
-    #setup the network
-    self.initialize_caches(n_steps)
-    for n in range(1,n_steps):
-      pred_y,hprev,cellprev = self.cell_forward(input_seq[n-1],hprev,cellprev,n)
-      if sample_char:
-       probs=F.softmax(pred_y.squeeze(1) * temp)
-       cat = dist.Categorical(probs=probs)
-       char_idx = cat.sample()
-      else:
-        #get the maximum char
-        char_idx = torch.argmax(pred_y.squeeze(1))
-        
-      input_seq[n] = char_idx.reshape(1,)
-      chat_idx = char_idx.cpu().numpy()
-      char = idx2char[chat_idx]
-      output_str+=char
-    return output_str
-
   def save_model(self, logdir, savedir,losses=None, accs=None):
     np.save(logdir + "/Wf.npy", self.Wf.detach().cpu().numpy())
     np.save(logdir + "/Wi.npy", self.Wi.detach().cpu().numpy())
@@ -303,35 +281,35 @@ class PC_LSTM(object):
     subprocess.call(['echo','saved at time: ' + str(current_time)])
 
   def load_model(self, save_dir):
-        Wf = np.load(save_dir+"/Wf.npy")
-        self.Wf = set_tensor(torch.from_numpy(Wf))
-        Wi = np.load(save_dir+"/Wi.npy")
-        self.Wi = set_tensor(torch.from_numpy(Wi))
-        Wc = np.load(save_dir+"/Wc.npy")
-        self.Wc = set_tensor(torch.from_numpy(Wc))
-        Wo = np.load(save_dir+"/Wo.npy")
-        self.Wo = set_tensor(torch.from_numpy(Wo))
-        Wy = np.load(save_dir+"/Wy.npy")
-        self.Wy = set_tensor(torch.from_numpy(Wy))
+    Wf = np.load(save_dir+"/Wf.npy")
+    self.Wf = set_tensor(torch.from_numpy(Wf))
+    Wi = np.load(save_dir+"/Wi.npy")
+    self.Wi = set_tensor(torch.from_numpy(Wi))
+    Wc = np.load(save_dir+"/Wc.npy")
+    self.Wc = set_tensor(torch.from_numpy(Wc))
+    Wo = np.load(save_dir+"/Wo.npy")
+    self.Wo = set_tensor(torch.from_numpy(Wo))
+    Wy = np.load(save_dir+"/Wy.npy")
+    self.Wy = set_tensor(torch.from_numpy(Wy))
 
-        bf = np.load(save_dir+"/bf.npy")
-        self.bf = set_tensor(torch.from_numpy(bf))
-        bi = np.load(save_dir+"/bi.npy")
-        self.bi = set_tensor(torch.from_numpy(bi))
-        bc = np.load(save_dir+"/bc.npy")
-        self.bc = set_tensor(torch.from_numpy(bc))
-        bo = np.load(save_dir+"/bo.npy")
-        self.bo = set_tensor(torch.from_numpy(bo))
-        by = np.load(save_dir+"/by.npy")
-        self.by = set_tensor(torch.from_numpy(by))
+    bf = np.load(save_dir+"/bf.npy")
+    self.bf = set_tensor(torch.from_numpy(bf))
+    bi = np.load(save_dir+"/bi.npy")
+    self.bi = set_tensor(torch.from_numpy(bi))
+    bc = np.load(save_dir+"/bc.npy")
+    self.bc = set_tensor(torch.from_numpy(bc))
+    bo = np.load(save_dir+"/bo.npy")
+    self.bo = set_tensor(torch.from_numpy(bo))
+    by = np.load(save_dir+"/by.npy")
+    self.by = set_tensor(torch.from_numpy(by))
 
-        #init_h = np.load(save_dir + "/init_h.npy")
-        #self.init_h = set_tensor(torch.from_numpy(init_h))
-        #init_cell = np.load(save_dir + "/init_cell.npy")
-        #self.init_cell = set_tensor(torch.from_numpy(init_cell))
+    #init_h = np.load(save_dir + "/init_h.npy")
+    #self.init_h = set_tensor(torch.from_numpy(init_h))
+    #init_cell = np.load(save_dir + "/init_cell.npy")
+    #self.init_cell = set_tensor(torch.from_numpy(init_cell))
 
-        embed = np.load(save_dir +"/embed_0.npy")
-        self.embed.weight = nn.Parameter(set_tensor(torch.from_numpy(embed)))
+    embed = np.load(save_dir +"/embed_0.npy")
+    self.embed.weight = nn.Parameter(set_tensor(torch.from_numpy(embed)))
 
   def train(self,dataset,n_epochs,logdir,savedir,old_savedir="None",init_embed_path="None",save_every=20):
     #load initial embedding from backprop version
@@ -374,7 +352,7 @@ class Backprop_LSTM(object):
     self.output_dim = output_dim
     self.vocab_size = vocab_size
     self.batch_size = batch_size 
-    self.clamp_val=100
+    self.clamp_val=50
     self.learning_rate = learning_rate 
     self.weight_init = weight_init
     self.bias_init = bias_init
@@ -485,7 +463,7 @@ class Backprop_LSTM(object):
     #self.mu_h[t] = torch.mul(self.mu_o[t], torch.tanh(self.mu_cell[t]))
     self.mu_h[t] = torch.mul(self.mu_o[t], torch.tanh(self.mu_cell[t]))
     #print("mu_h: ", self.mu_h[t])
-    self.mu_y[t] = torch.sigmoid(self.Wy @ self.mu_h[t] + self.by)
+    self.mu_y[t] = self.Wy @ self.mu_h[t] + self.by
     #print("mu_y: ", self.mu_y[t])
     return self.mu_y[t],self.mu_h[t], self.mu_cell[t]
 
@@ -538,9 +516,7 @@ class Backprop_LSTM(object):
 
   def update_parameters(self):
     #update weights
-    #self.Wf += 1 * self.learning_rate * torch.clamp(self.dWf,min=-5,max=5)
-    #print("dwy: ", torch.clamp(self.dWy,min=-5,max=5))
-
+    self.Wf += 1 * self.learning_rate * torch.clamp(self.dWf,min=-self.clamp_val,max=self.clamp_val)
     self.Wi += 1 * self.learning_rate * torch.clamp(self.dWi,min=-self.clamp_val,max=self.clamp_val)
     self.Wc += 1 * self.learning_rate * torch.clamp(self.dWc,min=-self.clamp_val,max=self.clamp_val)
     self.Wo += 1 * self.learning_rate * torch.clamp(self.dWo,min=-self.clamp_val,max=self.clamp_val)

@@ -303,6 +303,9 @@ if __name__ =='__main__':
         subprocess.call(["mkdir","-p",str(args.logdir)])
     print("folders created")
     dataset, vocab_size,char2idx,idx2char = get_lstm_dataset(args.seq_len, args.batch_size)
+    print("dataset loaded")
+    dataset = [[inp.numpy(),target.numpy()] for (inp, target) in dataset]
+    print("dataset numpified")
 
     input_size = vocab_size
     hidden_size = args.hidden_size

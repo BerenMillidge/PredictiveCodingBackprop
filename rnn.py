@@ -27,11 +27,12 @@ def rnn_accuracy(model, target_batch):
 
 
 class PC_RNN(object):
-  def __init__(self, hidden_size, input_size, output_size,batch_size, fn, fn_deriv,inference_learning_rate, weight_learning_rate, n_inference_steps,device="cpu"):
+  def __init__(self, hidden_size, input_size, output_size,batch_size,vocab_size, fn, fn_deriv,inference_learning_rate, weight_learning_rate, n_inference_steps,device="cpu"):
     self.hidden_size = hidden_size
     self.input_size = input_size
     self.output_size = output_size
     self.batch_size = batch_size
+    self.vocab_size = vocab_size
     self.fn = fn
     self.fn_deriv = fn_deriv
     self.inference_learning_rate = inference_learning_rate
@@ -139,8 +140,8 @@ class PC_RNN(object):
       for n in range(n_epochs):
         print("Epoch: ",n)
         for (inp, target) in dataset:
-          input_seq = set_tensor(torch.from_numpy(onehot(inp.reshape(seq_length,BATCH_SIZE),vocab_size)))
-          target_seq = set_tensor(torch.from_numpy(onehot(target.reshape(seq_length,BATCH_SIZE),vocab_size)))
+          input_seq = set_tensor(torch.from_numpy(onehot(inp.reshape(seq_length,self.batch_size),self.vocab_size)))
+          target_seq = set_tensor(torch.from_numpy(onehot(target.reshape(seq_length,self.batch_size),self.vocab_size)))
           self.forward_sweep(input_seq)
           self.infer(input_seq, target_seq)
           self.update_weights(input_seq)
@@ -159,11 +160,12 @@ class PC_RNN(object):
       return self.y_preds
         
 class Backprop_RNN(object):
-  def __init__(self, hidden_size, input_size, output_size,batch_size, fn, fn_deriv,learning_rate):
+  def __init__(self, hidden_size, input_size, output_size,batch_size,vocab_size, fn, fn_deriv,learning_rate):
     self.hidden_size = hidden_size
     self.input_size = input_size
     self.output_size = output_size
     self.batch_size = batch_size
+    self.vocab_size = vocab_size
     self.fn = fn
     self.fn_deriv = fn_deriv
     self.learning_rate = learning_rate
@@ -256,8 +258,8 @@ class Backprop_RNN(object):
       for n in range(n_epochs):
         print("Epoch: ",n)
         for (inp, target) in dataset:
-          input_seq = set_tensor(torch.from_numpy(onehot(inp.reshape(seq_length,BATCH_SIZE),vocab_size)))
-          target_seq = set_tensor(torch.from_numpy(onehot(target.reshape(seq_length,BATCH_SIZE),vocab_size)))
+          input_seq = set_tensor(torch.from_numpy(onehot(inp.reshape(seq_length,self.batch_size),self.vocab_size)))
+          target_seq = set_tensor(torch.from_numpy(onehot(target.reshape(seq_length,self.batch_size),self.vocab_size)))
           self.forward_sweep(input_seq)
           self.backward_sweep(input_seq, target_seq)
           dWy,dWx,dWh = self.update_weights(input_seq)
@@ -319,9 +321,9 @@ if __name__ =='__main__':
 
     #define networks
     if args.network_type == "pc":
-        net = PC_RNN(hidden_size, input_size,output_size,batch_size,tanh, tanh_deriv,inference_learning_rate,weight_learning_rate/2,n_inference_steps)
+        net = PC_RNN(hidden_size, input_size,output_size,batch_size,vocab_size,tanh, tanh_deriv,inference_learning_rate,weight_learning_rate/2,n_inference_steps)
     elif args.network_type == "backprop":
-        net = Backprop_RNN(hidden_size,input_size,output_size,batch_size,tanh, tanh_deriv,weight_learning_rate)
+        net = Backprop_RNN(hidden_size,input_size,output_size,batch_size,vocab_size,tanh, tanh_deriv,weight_learning_rate)
     else:
         raise Exception("Unknown network type entered")
 

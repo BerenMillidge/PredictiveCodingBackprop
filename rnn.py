@@ -132,7 +132,7 @@ class PC_RNN(object):
         h0 = np.load(save_dir+"/h0.npy")
         self.h0 = set_tensor(torch.from_numpy(h0))
   
-  def train(self,dataset,n_epochs,logdir,savedir,old_savedir="None",save_every=1):
+  def train(self,dataset,n_epochs,logdir,savedir,seq_length,old_savedir="None",save_every=1):
     with torch.no_grad():
       if old_savedir != "None":
           self.load_model(savedir)
@@ -249,7 +249,7 @@ class Backprop_RNN(object):
         h0 = np.load(save_dir+"/h0.npy")
         self.h0 = set_tensor(torch.from_numpy(h0))
 
-  def train(self,dataset,n_epochs,logdir,savedir,old_savedir="None",save_every=1):
+  def train(self,dataset,n_epochs,logdir,savedir,seq_length,old_savedir="None",save_every=1):
     with torch.no_grad():
       if old_savedir != "None":
           self.load_model(savedir)
@@ -326,7 +326,7 @@ if __name__ =='__main__':
         raise Exception("Unknown network type entered")
 
     #train!
-    net.train(dataset, int(n_epochs),args.logdir, args.savedir,old_savedir=args.old_savedir,save_every=args.save_every)
+    net.train(dataset, int(n_epochs),args.logdir, args.savedir,args.seq_len,old_savedir=args.old_savedir,save_every=args.save_every)
 
 
 

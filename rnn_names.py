@@ -406,9 +406,9 @@ if __name__ =='__main__':
         subprocess.call(["mkdir","-p",str(args.logdir)])
     print("folders created")
 
-    input_size = vocab_size
+    input_size = n_letters
     hidden_size = args.hidden_size
-    output_size = vocab_size
+    output_size = n_categories
     batch_size = args.batch_size
     inference_learning_rate = args.inference_learning_rate
     weight_learning_rate = args.weight_learning_rate
@@ -418,9 +418,9 @@ if __name__ =='__main__':
 
     #define networks
     if args.network_type == "pc":
-        net = PC_RNN(hidden_size, input_size,output_size,batch_size,vocab_size,tanh, tanh_deriv,inference_learning_rate,weight_learning_rate,n_inference_steps)
+        net = PC_RNN(hidden_size, input_size,output_size,batch_size,tanh, tanh_deriv,inference_learning_rate,weight_learning_rate,n_inference_steps)
     elif args.network_type == "backprop":
-        net = Backprop_RNN(hidden_size,input_size,output_size,batch_size,vocab_size,tanh, tanh_deriv,weight_learning_rate)
+        net = Backprop_RNN(hidden_size,input_size,output_size,batch_size,tanh, tanh_deriv,weight_learning_rate)
     else:
         raise Exception("Unknown network type entered")
 

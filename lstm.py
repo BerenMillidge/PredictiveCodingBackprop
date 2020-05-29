@@ -67,17 +67,17 @@ class PC_LSTM(object):
 
   def copy_params_from(self, model):
     #copy weights
-    self.dWf = set_tensor(model.dWf.clone())
-    self.dWi = set_tensor(model.dWi.clone())
-    self.dWc = set_tensor(model.dWc.clone())
-    self.dWo = set_tensor(model.dWo.clone())
-    self.dWy = set_tensor(model.dWy.clone())
+    self.Wf = set_tensor(model.Wf.clone())
+    self.Wi = set_tensor(model.Wi.clone())
+    self.Wc = set_tensor(model.Wc.clone())
+    self.Wo = set_tensor(model.Wo.clone())
+    self.Wy = set_tensor(model.Wy.clone())
     #copy biases
-    self.dbf = set_tensor(model.dbf.clone())
-    self.dbi = set_tensor(model.dbi.clone())
-    self.dbc = set_tensor(model.dbc.clone())
-    self.dbo = set_tensor(model.dbo.clone())
-    self.dby = set_tensor(model.dby.clone())
+    self.bf = set_tensor(model.bf.clone())
+    self.bi = set_tensor(model.bi.clone())
+    self.bc = set_tensor(model.bc.clone())
+    self.bo = set_tensor(model.bo.clone())
+    self.by = set_tensor(model.by.clone())
 
   def cell_forward(self, inp, hprev, cellprev,t):
     #forward pass for a single timestep of the LSTM
@@ -206,9 +206,6 @@ class PC_LSTM(object):
     T = len(input_seq)
     self.initialize_caches(T)
     #initialize starting hprev and cellprev
-    #I found that random initializations each time added too much noise for gradients to learn successfully
-    #self.hprev[0] = init_h if init_h is not None else set_tensor(torch.empty([self.hidden_dim, self.batch_size]).normal_(mean=0,std=0.1))
-    #self.cellprev[0] = init_cell if init_cell is not None else set_tensor(torch.empty([self.hidden_dim,self.batch_size]).normal_(mean=0, std=0.1))
     self.hprev[0] = init_h if init_h is not None else self.init_h #set_tensor(torch.zeros([self.hidden_dim, self.batch_size]))
     self.cellprev[0] = init_cell if init_cell is not None else self.init_cell #set_tensor(torch.zeros([self.hidden_dim, self.batch_size]))
     #roll forwards
@@ -269,8 +266,8 @@ class PC_LSTM(object):
     np.save(logdir + "/bo.npy", self.bo.detach().cpu().numpy())
     np.save(logdir + "/by.npy", self.by.detach().cpu().numpy())
 
-    #np.save(logdir + "/init_h.npy", self.init_h.detach().cpu().numpy())
-    #np.save(logdir + "/init_cell.npy", self.init_cell.detach().cpu().numpy())
+    np.save(logdir + "/init_h.npy", self.init_h.detach().cpu().numpy())
+    np.save(logdir + "/init_cell.npy", self.init_cell.detach().cpu().numpy())
     #save all the embedding parameters
     embed_params = list(self.embed.parameters())
     for (i,p) in enumerate(embed_params):
@@ -309,16 +306,14 @@ class PC_LSTM(object):
     self.bo = set_tensor(torch.from_numpy(bo))
     by = np.load(save_dir+"/by.npy")
     self.by = set_tensor(torch.from_numpy(by))
-
-    #init_h = np.load(save_dir + "/init_h.npy")
-    #self.init_h = set_tensor(torch.from_numpy(init_h))
-    #init_cell = np.load(save_dir + "/init_cell.npy")
-    #self.init_cell = set_tensor(torch.from_numpy(init_cell))
-
+    init_h = np.load(save_dir + "/init_h.npy")
+    self.init_h = set_tensor(torch.from_numpy(init_h))
+    init_cell = np.load(save_dir + "/init_cell.npy")
+    self.init_cell = set_tensor(torch.from_numpy(init_cell))
     embed = np.load(save_dir +"/embed_0.npy")
     self.embed.weight = nn.Parameter(set_tensor(torch.from_numpy(embed)))
 
-  def train(self,dataset,n_epochs,logdir,savedir,old_savedir="None",init_embed_path="None",save_every=20):
+  def train(self,dataset,n_epochs,logdir,savedir,old_savedir="None",init_embed_path="None",save_every=1):
     #load initial embedding from backprop version
     if old_savedir == "None" and init_embed_path != "None":
         embed = np.load(init_embed_path)
@@ -355,6 +350,7 @@ class PC_LSTM(object):
             
 
 
+
 class Backprop_LSTM(object):
   def __init__(self,input_dim, hidden_dim,output_dim,vocab_size, batch_size, learning_rate,weight_init=gaussian_init, bias_init=zeros_init,use_embedding=True):
     self.input_dim = input_dim
@@ -369,24 +365,12 @@ class Backprop_LSTM(object):
     self.use_embedding = use_embedding
     self.z_dim = self.input_dim + self.hidden_dim
     #initialize weights
-    #self.Wf = set_tensor(self.std_uniform_init(torch.empty([self.hidden_dim, self.z_dim]))) * 10
-    #self.Wi = set_tensor(self.std_uniform_init(torch.empty([self.hidden_dim, self.z_dim]))) * 10
-    #self.Wc = set_tensor(self.std_uniform_init(torch.empty([self.hidden_dim, self.z_dim]))) * 10
-    #self.Wo = set_tensor(self.std_uniform_init(torch.empty([self.hidden_dim, self.z_dim]))) * 10
-    #self.Wy = set_tensor(self.std_uniform_init(torch.empty([self.output_dim, self.hidden_dim]))) * 10
-    #self.embed = set_tensor(self.std_uniform_init(torch.empty([self.z_dim, self.z_dim]))) 
-    #
     self.Wf = set_tensor(torch.from_numpy(np.random.normal(0,0.05,[self.hidden_dim, self.z_dim])))
     self.Wi = set_tensor(torch.from_numpy(np.random.normal(0,0.05,[self.hidden_dim, self.z_dim])))
     self.Wc = set_tensor(torch.from_numpy(np.random.normal(0,0.05,[self.hidden_dim, self.z_dim])))
     self.Wo = set_tensor(torch.from_numpy(np.random.normal(0,0.05,[self.hidden_dim, self.z_dim])))
     self.Wy = set_tensor(torch.from_numpy(np.random.normal(0,0.05,[self.output_dim, self.hidden_dim])))
-    #initialize biases 
-    #self.bf = set_tensor(self.std_uniform_init(torch.empty(([self.hidden_dim,1]))))
-    #self.bi = set_tensor(self.std_uniform_init(torch.empty(([self.hidden_dim,1]))))
-    #self.bc = set_tensor(self.std_uniform_init(torch.empty(([self.hidden_dim,1]))))
-    #self.bo = set_tensor(self.std_uniform_init(torch.empty(([self.hidden_dim,1]))))
-    #self.by = set_tensor(self.std_uniform_init(torch.empty(([self.output_dim,1]))))
+    #initialize biases
     self.bf = set_tensor(torch.zeros((self.hidden_dim,1)))
     self.bi = set_tensor(torch.zeros((self.hidden_dim,1)))
     self.bc = set_tensor(torch.zeros((self.hidden_dim,1)))
@@ -418,17 +402,20 @@ class Backprop_LSTM(object):
 
   def copy_params_from(self, model):
     #copy weights
-    self.dWf = set_tensor(model.dWf.clone())
-    self.dWi = set_tensor(model.dWi.clone())
-    self.dWc = set_tensor(model.dWc.clone())
-    self.dWo = set_tensor(model.dWo.clone())
-    self.dWy = set_tensor(model.dWy.clone())
+    self.Wf = set_tensor(model.Wf.clone())
+    self.Wi = set_tensor(model.Wi.clone())
+    self.Wc = set_tensor(model.Wc.clone())
+    self.Wo = set_tensor(model.Wo.clone())
+    self.Wy = set_tensor(model.Wy.clone())
     #copy biases
-    self.dbf = set_tensor(model.dbf.clone())
-    self.dbi = set_tensor(model.dbi.clone())
-    self.dbc = set_tensor(model.dbc.clone())
-    self.dbo = set_tensor(model.dbo.clone())
-    self.dby = set_tensor(model.dby.clone())
+    self.bf = set_tensor(model.bf.clone())
+    self.bi = set_tensor(model.bi.clone())
+    self.bc = set_tensor(model.bc.clone())
+    self.bo = set_tensor(model.bo.clone())
+    self.by = set_tensor(model.by.clone())
+    self.init_h = set_tensor(model.init_h.clone())
+    self.init_cell = set_tensor(model.init_cell.clone())
+    self.embed.weight = nn.Parameter(set_tensor(model.embed.weight.clone()))
 
   def cell_forward(self, inp, hprev, cellprev,t):
     #forward pass for a single timestep of the LSTM
@@ -436,7 +423,6 @@ class Backprop_LSTM(object):
     #hprev = previous hidden states [Hidden_size x Batch]
     #cellprev = previous cell state [Hidden_size x Batch]
     #t = position in sequence [int]
-    #implements the forward pass of the LSTM. Saves the predictions for later inference
     if self.use_embedding:
         embed = self.embed(inp).permute(1,0)
         z = torch.cat((embed, hprev),axis=0)
@@ -444,32 +430,19 @@ class Backprop_LSTM(object):
         z = torch.cat((inp, hprev),axis=0)
     #forget gate
     self.mu_f_activations[t] = self.Wf @ z + self.bf
-    #self.mu_f[t] = torch.sigmoid(self.mu_f_activations[t])
     self.mu_f[t] = F.sigmoid(self.mu_f_activations[t])
-    #print("mu_f: ", self.mu_f[t])
     #input gate
     self.mu_i_activations[t] = self.Wi @ z + self.bi
-    #self.mu_i[t] = torch.sigmoid(self.mu_i_activations[t])
     self.mu_i[t] = F.sigmoid(self.mu_i_activations[t])
-    #print("mu_i: ", self.mu_i[t])
     #control gate
     self.mu_c_activations[t] = self.Wc @ z + self.bc
-    #self.mu_c[t] = torch.tanh(self.mu_c_activations[t])
     self.mu_c[t] = F.tanh(self.mu_c_activations[t])
-    #print("mu_c: ", self.mu_c[t])
-    #output gate
     self.mu_o_activations[t] = self.Wo @ z + self.bo
-    #self.mu_o[t] = torch.sigmoid(self.mu_o_activations[t])
     self.mu_o[t] =F.sigmoid(self.mu_o_activations[t])
-    #print("mu_o: ", self.mu_o[t])
 
     self.mu_cell[t] = torch.mul(self.mu_f[t], cellprev) + torch.mul(self.mu_i[t], self.mu_c[t])
-    #print("mu_cell: ", self.mu_cell[t])
-    #self.mu_h[t] = torch.mul(self.mu_o[t], torch.tanh(self.mu_cell[t]))
     self.mu_h[t] = torch.mul(self.mu_o[t], torch.tanh(self.mu_cell[t]))
-    #print("mu_h: ", self.mu_h[t])
     self.mu_y[t] = self.Wy @ self.mu_h[t] + self.by
-    #print("mu_y: ", self.mu_y[t])
     return self.mu_y[t],self.mu_h[t], self.mu_cell[t]
 
   def cell_backward(self,inp,true_labels,cellprev,hprev,dc_back, dh_back,t):
@@ -488,8 +461,6 @@ class Backprop_LSTM(object):
     df = torch.mul(sigmoid_deriv(self.mu_f_activations[t]), torch.mul(cellprev, dcell))
     di = torch.mul(sigmoid_deriv(self.mu_i_activations[t]),torch.mul(dcell, self.mu_c[t]))
     dc = torch.mul(tanh_deriv(self.mu_c_activations[t]),torch.mul(dcell,self.mu_i[t]))
-
-    #I think these accumulation steps should all be + now. Although I need to check numerically
     #accumulate weights
     self.dWf += df @ z.T
     self.dWi += di @ z.T
@@ -512,17 +483,17 @@ class Backprop_LSTM(object):
 
   def update_parameters(self):
     #update weights
-    self.Wf -= 1 * self.learning_rate * torch.clamp(self.dWf,min=-self.clamp_val,max=self.clamp_val)
-    self.Wi -= 1 * self.learning_rate * torch.clamp(self.dWi,min=-self.clamp_val,max=self.clamp_val)
-    self.Wc -= 1 * self.learning_rate * torch.clamp(self.dWc,min=-self.clamp_val,max=self.clamp_val)
-    self.Wo -= 1 * self.learning_rate * torch.clamp(self.dWo,min=-self.clamp_val,max=self.clamp_val)
-    self.Wy -= 1 * self.learning_rate * torch.clamp(self.dWy,min=-self.clamp_val,max=self.clamp_val)
+    self.Wf += 1 * self.learning_rate * torch.clamp(self.dWf,min=-self.clamp_val,max=self.clamp_val)
+    self.Wi += 1 * self.learning_rate * torch.clamp(self.dWi,min=-self.clamp_val,max=self.clamp_val)
+    self.Wc += 1 * self.learning_rate * torch.clamp(self.dWc,min=-self.clamp_val,max=self.clamp_val)
+    self.Wo += 1 * self.learning_rate * torch.clamp(self.dWo,min=-self.clamp_val,max=self.clamp_val)
+    self.Wy += 1 * self.learning_rate * torch.clamp(self.dWy,min=-self.clamp_val,max=self.clamp_val)
     #update biases
-    self.bf -= self.learning_rate * torch.clamp(self.dbf,min=-self.clamp_val,max=self.clamp_val)
-    self.bi -= self.learning_rate * torch.clamp(self.dbi,min=-self.clamp_val,max=self.clamp_val)
-    self.bc -= self.learning_rate * torch.clamp(self.dbc,min=-self.clamp_val,max=self.clamp_val)
-    self.bo -= self.learning_rate * torch.clamp(self.dbo,min=-self.clamp_val,max=self.clamp_val)
-    self.by -= self.learning_rate * torch.clamp(self.dby,min=-self.clamp_val,max=self.clamp_val)
+    self.bf += self.learning_rate * torch.clamp(self.dbf,min=-self.clamp_val,max=self.clamp_val)
+    self.bi += self.learning_rate * torch.clamp(self.dbi,min=-self.clamp_val,max=self.clamp_val)
+    self.bc += self.learning_rate * torch.clamp(self.dbc,min=-self.clamp_val,max=self.clamp_val)
+    self.bo += self.learning_rate * torch.clamp(self.dbo,min=-self.clamp_val,max=self.clamp_val)
+    self.by += self.learning_rate * torch.clamp(self.dby,min=-self.clamp_val,max=self.clamp_val)
     #zero gradients
     self.zero_gradients()
 
@@ -546,11 +517,6 @@ class Backprop_LSTM(object):
     #loop over the sequence to do the first forward pass
     T = len(input_seq)
     self.initialize_caches(T)
-    #initialize starting hprev and cellprev
-    #I found that random initializations each time added too much noise for gradients to learn successfully
-    #self.hprev[0] = init_h if init_h is not None else set_tensor(torch.empty([self.hidden_dim, self.batch_size]).normal_(mean=0,std=0.1))
-    #self.cellprev[0] = init_cell if init_cell is not None else set_tensor(torch.empty([self.hidden_dim,self.batch_size]).normal_(mean=0, std=0.1))
-    #set some FIXED noise here from the initialization. WIll this fix it?
     self.hprev[0] = init_h if init_h is not None else self.init_h
     self.cellprev[0] = init_cell if init_cell is not None else self.init_cell
     #roll forwards
@@ -569,11 +535,7 @@ class Backprop_LSTM(object):
     #begin the backwards loop
     for (t, (inp, targ)) in reversed(list(enumerate(zip(input_seq,target_seq)))):
       self.dc_back, dh_back = self.cell_backward(inp, targ,self.cellprev[t],self.hprev[t],self.dc_back,self.dh_back,t)
-      #print("in backward: ", dh_back.shape)
       self.dh_back = dh_back[self.input_dim:,:]
-      #print("after: ", dh_back.shape)
-      #print("after: ", self.dh_back.shape)
-      #self.dh_back = dh_back[0:self.hidden_dim,:]
     return self.dc_back, self.dh_back,self.dWf, self.dWi, self.dWc,self.dWo,self.dWy
 
   def sample_sentence(self,input_char, n_steps,sample_char=False,init_h=None,init_cell=None,temp=20):
@@ -681,47 +643,42 @@ class Backprop_LSTM(object):
     self.init_cell = nn.Parameter(self.init_cell)
 
   def train(self, dataset,n_epochs,logdir, savedir,old_savedir="",init_embed_path = "None",save_every=20):
-    if old_savedir != "None":
-        self.load_model(old_savedir)
-    self.net_set_parameters()
-    params = [self.Wf,self.Wi,self.Wc,self.Wo,self.Wy,self.bf,self.bi,self.bc,self.bo,self.by]
-    #params += list(self.embed.parameters())
-    #0.0005
-    optimizer = optim.SGD(params, lr=self.learning_rate)
-    losses = []
-    accs = []
-    #create a file to write the outputs to
-    output_file = open(logdir +"/output.txt", "w")
-    for n in range(n_epochs):
-      print("Epoch ", n)
-      for (i,(input_seq, target_seq)) in enumerate(dataset):
-        if self.use_embedding:
-            input_seq = list(torch.tensor(torch.from_numpy(input_seq.numpy()),dtype=torch.long).permute(1,0).to(DEVICE))
-        else:
-            input_seq = list(set_tensor(torch.from_numpy(onehot(input_seq, self.vocab_size)).float().permute(2,1,0)))
-        target_seq = list(set_tensor(torch.from_numpy(onehot(target_seq, self.vocab_size)).float().permute(2,1,0)))
-        pred_ys = self.forward(input_seq)
-        optimizer.zero_grad()
-        L = 0.0
-        for pred_y,targ in zip(pred_ys,target_seq):
-          L += torch.sum((pred_y - targ)**2)
-        print("Loss: ", L)
-        acc = sequence_accuracy(self,target_seq)
-        print("Accuracy: ", acc)
-        L.backward() 
-        optimizer.step()
-        #print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)))
-        #print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)))
-        #only save after each n goes to save a bit of space wil still get PLENTY of results
-        if i % save_every == 0:
-            losses.append(L.item())
-            accs.append(acc)
-            print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)),file=output_file)
-            print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)),file=output_file)
-        if i % 200 == 0:
-            #save model after each epoch
-            print("FINISHED EPOCH: " + str(n) + " SAVING MODEL")
-            self.save_model(logdir, savedir,losses,accs)
+    with torch.no_grad():
+      if old_savedir != "None":
+          self.load_model(old_savedir)
+      self.net_set_parameters()
+      losses = []
+      accs = []
+      #create a file to write the outputs to
+      output_file = open(logdir +"/output.txt", "w")
+      for n in range(n_epochs):
+        print("Epoch ", n)
+        for (i,(input_seq, target_seq)) in enumerate(dataset):
+          if self.use_embedding:
+              input_seq = list(torch.tensor(torch.from_numpy(input_seq.numpy()),dtype=torch.long).permute(1,0).to(DEVICE))
+          else:
+              input_seq = list(set_tensor(torch.from_numpy(onehot(input_seq, self.vocab_size)).float().permute(2,1,0)))
+          target_seq = list(set_tensor(torch.from_numpy(onehot(target_seq, self.vocab_size)).float().permute(2,1,0)))
+          pred_ys = self.forward(input_seq)
+          dc_back, dh_back,dWf, dWi, dWc,dWo,dWy = self.backward(input_seq, target_seq)
+          self.update_parameters()
+          if i % save_every == 0:
+              L = 0
+              for pred_y,targ in zip(pred_ys,target_seq):
+                L += torch.sum((pred_y - targ)**2)
+              print("Loss: ", L.item())
+              acc = sequence_accuracy(self,target_seq)
+              print("Accuracy: ", acc)
+              losses.append(L.item())
+              accs.append(acc)
+              print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)),file=output_file)
+              print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)),file=output_file)
+          if i % 200 == 0:
+              #save model after each epoch
+              print("FINISHED EPOCH: " + str(n) + " SAVING MODEL")
+              self.save_model(logdir, savedir,losses,accs)
+
+
 
 print("reached end of file before")
 
@@ -736,7 +693,7 @@ if __name__ =='__main__':
     parser.add_argument("--hidden_size",type=int,default=1056)
     parser.add_argument("--n_inference_steps",type=int, default=200)
     parser.add_argument("--inference_learning_rate",type=float,default=0.1)
-    parser.add_argument("--weight_learning_rate",type=float,default=0.0001)
+    parser.add_argument("--weight_learning_rate",type=float,default=0.00001)
     parser.add_argument("--N_epochs",type=int, default=10000)
     parser.add_argument("--save_every",type=int, default=1)
     parser.add_argument("--sample_every",type=int,default=200)
@@ -768,9 +725,9 @@ if __name__ =='__main__':
 
     #define networks
     if args.network_type == "pc":
-        net = PC_LSTM(input_size, hidden_size,output_size,vocab_size,batch_size,inference_learning_rate,weight_learning_rate/2,n_inference_steps)
+        net = PC_LSTM(input_size, hidden_size,output_size,vocab_size,batch_size,inference_learning_rate,weight_learning_rate/2,n_inference_steps,use_embedding=False)
     elif args.network_type == "backprop":
-        net = Backprop_LSTM(input_size,hidden_size,output_size,vocab_size,batch_size,weight_learning_rate)
+        net = Backprop_LSTM(input_size,hidden_size,output_size,vocab_size,batch_size,weight_learning_rate,use_embedding=False)
     else:
         raise Exception("Unknown network type entered")
 

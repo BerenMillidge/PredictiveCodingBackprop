@@ -376,7 +376,7 @@ class Backprop_RNN(object):
           accs.append(acc)
           loss = 0
           acc = 0
-        if n % 200 == 0:
+        if n % 3000 == 0:
           self.save_model(logdir,savedir, losses,accs)
 
 
@@ -392,8 +392,8 @@ if __name__ =='__main__':
     parser.add_argument("--n_inference_steps",type=int, default=100)
     parser.add_argument("--inference_learning_rate",type=float,default=0.1)
     parser.add_argument("--weight_learning_rate",type=float,default=0.0001)
-    parser.add_argument("--N_epochs",type=int, default=100000)
-    parser.add_argument("--save_every",type=int, default=1)
+    parser.add_argument("--N_epochs",type=int, default=150000)
+    parser.add_argument("--save_every",type=int, default=50)
     parser.add_argument("--network_type",type=str,default="backprop")
     parser.add_argument("--old_savedir",type=str,default="None")
 

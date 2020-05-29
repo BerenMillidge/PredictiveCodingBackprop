@@ -512,17 +512,17 @@ class Backprop_LSTM(object):
 
   def update_parameters(self):
     #update weights
-    self.Wf += 1 * self.learning_rate * torch.clamp(self.dWf,min=-self.clamp_val,max=self.clamp_val)
-    self.Wi += 1 * self.learning_rate * torch.clamp(self.dWi,min=-self.clamp_val,max=self.clamp_val)
-    self.Wc += 1 * self.learning_rate * torch.clamp(self.dWc,min=-self.clamp_val,max=self.clamp_val)
-    self.Wo += 1 * self.learning_rate * torch.clamp(self.dWo,min=-self.clamp_val,max=self.clamp_val)
-    self.Wy += 1 * self.learning_rate * torch.clamp(self.dWy,min=-self.clamp_val,max=self.clamp_val)
+    self.Wf -= 1 * self.learning_rate * torch.clamp(self.dWf,min=-self.clamp_val,max=self.clamp_val)
+    self.Wi -= 1 * self.learning_rate * torch.clamp(self.dWi,min=-self.clamp_val,max=self.clamp_val)
+    self.Wc -= 1 * self.learning_rate * torch.clamp(self.dWc,min=-self.clamp_val,max=self.clamp_val)
+    self.Wo -= 1 * self.learning_rate * torch.clamp(self.dWo,min=-self.clamp_val,max=self.clamp_val)
+    self.Wy -= 1 * self.learning_rate * torch.clamp(self.dWy,min=-self.clamp_val,max=self.clamp_val)
     #update biases
-    self.bf += self.learning_rate * torch.clamp(self.dbf,min=-self.clamp_val,max=self.clamp_val)
-    self.bi += self.learning_rate * torch.clamp(self.dbi,min=-self.clamp_val,max=self.clamp_val)
-    self.bc += self.learning_rate * torch.clamp(self.dbc,min=-self.clamp_val,max=self.clamp_val)
-    self.bo += self.learning_rate * torch.clamp(self.dbo,min=-self.clamp_val,max=self.clamp_val)
-    self.by += self.learning_rate * torch.clamp(self.dby,min=-self.clamp_val,max=self.clamp_val)
+    self.bf -= self.learning_rate * torch.clamp(self.dbf,min=-self.clamp_val,max=self.clamp_val)
+    self.bi -= self.learning_rate * torch.clamp(self.dbi,min=-self.clamp_val,max=self.clamp_val)
+    self.bc -= self.learning_rate * torch.clamp(self.dbc,min=-self.clamp_val,max=self.clamp_val)
+    self.bo -= self.learning_rate * torch.clamp(self.dbo,min=-self.clamp_val,max=self.clamp_val)
+    self.by -= self.learning_rate * torch.clamp(self.dby,min=-self.clamp_val,max=self.clamp_val)
     #zero gradients
     self.zero_gradients()
 

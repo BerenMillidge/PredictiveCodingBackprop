@@ -348,8 +348,8 @@ class PC_LSTM(object):
             print("Accuracy: ", acc)
             losses.append(loss)
             accs.append(acc)
-            print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)),file=output_file)
-            print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)),file=output_file)
+            #print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)),file=output_file)
+            #print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)),file=output_file)
           if i % 200 == 0:
             print("FINISHED EPOCH: " + str(n) + " SAVING MODEL")
             self.save_model(logdir, savedir,losses,accs)
@@ -683,8 +683,8 @@ class Backprop_LSTM(object):
               print("Accuracy: ", acc)
               losses.append(L.item())
               accs.append(acc)
-              print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)),file=output_file)
-              print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)),file=output_file)
+              #print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)),file=output_file)
+              #print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)),file=output_file)
           if i % 200 == 0:
               #save model after each epoch
               print("FINISHED EPOCH: " + str(n) + " SAVING MODEL")
@@ -744,5 +744,5 @@ if __name__ =='__main__':
         raise Exception("Unknown network type entered")
 
     #train!
-    net.train(dataset, int(n_epochs),args.logdir, args.savedir,old_savedir=args.old_savedir,init_embed_path = args.init_embed_path,save_every=args.save_every)
+    net.train(dataset[0:-2], int(n_epochs),args.logdir, args.savedir,old_savedir=args.old_savedir,init_embed_path = args.init_embed_path,save_every=args.save_every)
 

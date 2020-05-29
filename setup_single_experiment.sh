@@ -61,6 +61,7 @@ mnist_path=${repo_home}/mnist_data
 cifar_path=${repo_home}/cifar_data
 cifar100_path=${repo_home}/cifar100_data
 svhn_path=${repo_home}/svhn_data
+names_path=${repo_home}/data
 #src_path=${repo_home}/experiments/examples/mnist/data/input
 
 # input data directory path on the scratch disk of the node
@@ -72,6 +73,8 @@ cifar100_dest_path=${SCRATCH_DISK}/${USER}/cifar100_data
 mkdir -p ${cifar100_dest_path}  # make it if required
 svhn_dest_path=${SCRATCH_DISK}/${USER}/svhn_data
 mkdir -p ${svhn_dest_path}  # make it if required
+names_dest_path=${SCRATCH_DISK}/${USER}/data
+mkdir -p ${names_dest_path}
 
 # Important notes about rsync:
 # * the --compress option is going to compress the data before transfer to send
@@ -91,6 +94,8 @@ rsync --archive --update --compress --progress ${cifar100_path}/ ${cifar100_dest
 echo "Rsynced cifar100"
 rsync --archive --update --compress --progress ${svhn_path}/ ${svhn_dest_path}
 echo "Rsynced svhn"
+rsync --archive --update --compress --progress ${names_path}/ ${names_dest_path}
+echo "Rsynced names data"
 
 #echo "Running experiment command"
 #pip install git+https://github.com/Bmillidgework/exploration-baselines

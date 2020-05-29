@@ -25,8 +25,8 @@ def download_extract_names_data():
 def find_files(path):
   return glob.glob(path)
 
-download_extract_names_data()
-print(find_files("data/data/names/*.txt"))
+#download_extract_names_data()
+#print(find_files("data/data/names/*.txt"))
 
 all_letters = string.ascii_letters + " .,;'"
 n_letters = len(all_letters)
@@ -57,7 +57,8 @@ def files_to_categories(filelist):
     n_categories = len(all_categories)
   return category_lines, all_categories, n_categories
 
-filelist = find_files("data/data/names/*.txt")
+
+filelist = find_files("./data/data/names/*.txt")
 category_lines, all_categories, n_categories = files_to_categories(filelist)
 print(category_lines["Italian"][:5])
 
@@ -251,7 +252,7 @@ class PC_RNN(object):
           loss = 0
           acc = 0
         if n % 200:
-            self.save_model(logdir,savedir, losses,accs)
+          self.save_model(logdir,savedir, losses,accs)
 
 
 # let's generate a comparison backprop RNN so I can have the analytiacl weight updates done here which would be nice and straightforward to do
@@ -371,7 +372,7 @@ class Backprop_RNN(object):
           loss = 0
           acc = 0
         if n % 200:
-            self.save_model(logdir,savedir, losses,accs)
+          self.save_model(logdir,savedir, losses,accs)
 
 
 

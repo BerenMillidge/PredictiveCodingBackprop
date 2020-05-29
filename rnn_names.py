@@ -1,11 +1,9 @@
-import tensorflow as tf
 import torch 
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import os
 import time
-import matplotlib.pyplot as plt
 import requests 
 import glob
 import zipfile
@@ -258,7 +256,7 @@ class PC_RNN(object):
           accs.append(acc)
           loss = 0
           acc = 0
-        if n % 200:
+        if n % 200 == 0:
           self.save_model(logdir,savedir, losses,accs)
 
 
@@ -378,7 +376,7 @@ class Backprop_RNN(object):
           accs.append(acc)
           loss = 0
           acc = 0
-        if n % 200:
+        if n % 200 == 0:
           self.save_model(logdir,savedir, losses,accs)
 
 

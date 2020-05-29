@@ -366,7 +366,7 @@ class Backprop_LSTM(object):
     self.learning_rate = learning_rate 
     self.weight_init = weight_init
     self.bias_init = bias_init
-    self.use_embedding = self.use_embedding
+    self.use_embedding = use_embedding
     self.z_dim = self.input_dim + self.hidden_dim
     #initialize weights
     #self.Wf = set_tensor(self.std_uniform_init(torch.empty([self.hidden_dim, self.z_dim]))) * 10

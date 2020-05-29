@@ -232,7 +232,10 @@ class PC_LSTM(object):
 
   def sample_sentence(self,input_char, n_steps,sample_char=False,init_h=None,init_cell=None,temp=20):
     input_seq = [set_tensor(torch.zeros_like(input_char)) for i in range(n_steps)]
-    input_seq[0] = torch.tensor(input_char).reshape(1,)
+    if self.use_embedding:
+      input_seq[0] = torch.tensor(input_char).reshape(1,)
+    else:
+      input_seq[0]= input_char.unsqueeze(1).clone()
     hprev = init_h if init_h is not None else set_tensor(torch.zeros([self.hidden_dim,1]))
     cellprev = init_cell if init_cell is not None else set_tensor(torch.zeros([self.hidden_dim,1]))
     output_str = ""
@@ -248,7 +251,10 @@ class PC_LSTM(object):
         #get the maximum char
         char_idx = torch.argmax(pred_y.squeeze(1))
         
-      input_seq[n] = char_idx.reshape(1,)
+      if self.use_embedding:
+        input_seq[n] = char_idx.reshape(1,)
+      else:
+        input_seq[n] = set_tensor(torch.from_numpy(onehot(char_idx.reshape(1,1),self.vocab_size))).squeeze(0)
       char = idx2char[char_idx]
       output_str+=char
     return output_str
@@ -540,7 +546,10 @@ class Backprop_LSTM(object):
 
   def sample_sentence(self,input_char, n_steps,sample_char=False,init_h=None,init_cell=None,temp=20):
     input_seq = [set_tensor(torch.zeros_like(input_char)) for i in range(n_steps)]
-    input_seq[0] = torch.tensor(input_char).reshape(1,)
+    if self.use_embedding:
+      input_seq[0] = torch.tensor(input_char).reshape(1,)
+    else:
+      input_seq[0]= input_char.unsqueeze(1).clone()
     hprev = init_h if init_h is not None else set_tensor(torch.zeros([self.hidden_dim,1]))
     cellprev = init_cell if init_cell is not None else set_tensor(torch.zeros([self.hidden_dim,1]))
     output_str = ""
@@ -556,7 +565,10 @@ class Backprop_LSTM(object):
         #get the maximum char
         char_idx = torch.argmax(pred_y.squeeze(1))
         
-      input_seq[n] = char_idx.reshape(1,)
+      if self.use_embedding:
+        input_seq[n] = char_idx.reshape(1,)
+      else:
+        input_seq[n] = set_tensor(torch.from_numpy(onehot(char_idx.reshape(1,1),self.vocab_size))).squeeze(0)
       char = idx2char[char_idx]
       output_str+=char
     return output_str

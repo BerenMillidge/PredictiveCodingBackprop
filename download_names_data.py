@@ -1,5 +1,3 @@
-  url = "https://download.pytorch.org/tutorial/data.zip"
-  r = requests.get(url, allow_redirects=True)
 import requests 
 import glob
 import zipfile

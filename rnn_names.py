@@ -13,6 +13,12 @@ import unicodedata
 import string
 import random
 from utils import *
+import math
+import subprocess
+import argparse
+from datetime import datetime
+
+subprocess.call(['echo','opening file'])
 
 def download_extract_names_data():
   url = "https://download.pytorch.org/tutorial/data.zip"
@@ -61,6 +67,7 @@ def files_to_categories(filelist):
 filelist = find_files("./data/data/names/*.txt")
 category_lines, all_categories, n_categories = files_to_categories(filelist)
 print(category_lines["Italian"][:5])
+subprocess.call(['echo','files downloaded'])
 
 def char2idx(char):
   return all_letters.find(char)
@@ -378,7 +385,7 @@ class Backprop_RNN(object):
 
 if __name__ =='__main__':
     parser = argparse.ArgumentParser()
-    print("Initialized")
+    subprocess.call(['echo', 'Initialized'])
         #parsing arguments
     parser.add_argument("--logdir", type=str, default="logs")
     parser.add_argument("--savedir",type=str,default="savedir")
@@ -420,6 +427,7 @@ if __name__ =='__main__':
         raise Exception("Unknown network type entered")
 
     #train!
+    subprocess.call(['echo','beginning training'])
     net.train(int(n_epochs),args.logdir, args.savedir,old_savedir=args.old_savedir,save_every=args.save_every)
 
 

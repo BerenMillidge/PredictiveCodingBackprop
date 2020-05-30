@@ -19,7 +19,7 @@ from layers import *
 
 
 class PCNet(object):
-  def __init__(self, layers, n_inference_steps_train, inference_learning_rate,device='cpu',numerical_check=False,dynamical_weight_update=False,update_dilation_factor=None):
+  def __init__(self, layers, n_inference_steps_train, inference_learning_rate,device='cpu',numerical_check=False):
     self.layers= layers
     self.n_inference_steps_train = n_inference_steps_train
     self.inference_learning_rate = inference_learning_rate
@@ -30,14 +30,6 @@ class PCNet(object):
     self.predictions = [[] for i in range(self.L+1)]
     self.mus = [[] for i in range(self.L+1)]
     self.numerical_check = numerical_check
-    self.update_dilation_factor = update_dilation_factor
-    if self.update_dilation_factor is None:
-        self.update_dilation_factor = self.n_inference_steps_train
-    self.dynamical_weight_update = dynamical_weight_update
-    if self.dynamical_weight_update:
-      for l in self.layers:
-        if hasattr(l,"learning_rate"):
-          l.learning_rate = l.learning_rate / self.update_dilation_factor
     if self.numerical_check:
       print("Numerical Check Activated!")
       for l in self.layers:
@@ -93,9 +85,6 @@ class PCNet(object):
             self.predictions[j] = self.layers[j].backward(self.prediction_errors[j+1])
             dx_l = self.prediction_errors[j] - self.predictions[j]
             self.mus[j] -= self.inference_learning_rate * (2*dx_l)
-        #update dynamical weights
-        if self.dynamical_weight_update:
-            weight_diffs = self.update_weights()
       #update weights
       weight_diffs = self.update_weights()
       #get loss:
@@ -255,8 +244,6 @@ if __name__ == '__main__':
     parser.add_argument("--inference_learning_rate",type=float,default=0.1)
     parser.add_argument("--network_type",type=str,default="pc")
     parser.add_argument("--dataset",type=str,default="cifar")
-    parser.add_argument("--dynamical_weight_update",type=boolcheck,default="False")
-    parser.add_argument("--update_dilation_factor",type=float, default=10.0)
 
     args = parser.parse_args()
     print("Args parsed")
@@ -302,7 +289,7 @@ if __name__ == '__main__':
     #l8 = FCLayer(50,10,64,args.learning_rate,linear,linear_deriv,device=DEVICE)
     #layers =[l1,l2,l3,l4,l5,l6,l7,l8]
     if args.network_type == "pc":
-        net = PCNet(layers,args.n_inference_steps,args.inference_learning_rate,dynamical_weight_update=args.dynamical_weight_update, update_dilation_factor=args.update_dilation_factor,device=DEVICE)
+        net = PCNet(layers,args.n_inference_steps,args.inference_learning_rate,device=DEVICE)
     elif args.network_type == "backprop":
         net = Backprop_CNN(layers)
     else:

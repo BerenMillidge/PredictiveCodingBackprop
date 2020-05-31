@@ -319,7 +319,7 @@ class PC_LSTM(object):
     embed = np.load(save_dir +"/embed_0.npy")
     self.embed.weight = nn.Parameter(set_tensor(torch.from_numpy(embed)))
 
-  def train(self,dataset,n_epochs,logdir,savedir,old_savedir="None",init_embed_path="None",save_every=1):
+  def train(self,dataset,n_epochs,logdir,savedir,old_savedir="None",init_embed_path="None",save_every=20):
     #load initial embedding from backprop version
     if old_savedir == "None" and init_embed_path != "None":
         embed = np.load(init_embed_path)
@@ -348,8 +348,8 @@ class PC_LSTM(object):
             print("Accuracy: ", acc)
             losses.append(loss)
             accs.append(acc)
-            #print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)),file=output_file)
-            #print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)),file=output_file)
+            print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)),file=output_file)
+            print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)),file=output_file)
           if i % 200 == 0:
             print("FINISHED EPOCH: " + str(n) + " SAVING MODEL")
             self.save_model(logdir, savedir,losses,accs)
@@ -683,8 +683,8 @@ class Backprop_LSTM(object):
               print("Accuracy: ", acc)
               losses.append(L.item())
               accs.append(acc)
-              #print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)),file=output_file)
-              #print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)),file=output_file)
+              print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)),file=output_file)
+              print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)),file=output_file)
           if i % 200 == 0:
               #save model after each epoch
               print("FINISHED EPOCH: " + str(n) + " SAVING MODEL")
@@ -712,7 +712,8 @@ if __name__ =='__main__':
     parser.add_argument("--network_type",type=str,default="backprop")
     parser.add_argument("--sample_char",type=boolcheck,default="True")
     parser.add_argument("--old_savedir",type=str,default="None")
-    parser.add_argument("--init_embed_path",type=str,default="None") #"/home/s1686853/lstm_backprop_experiments/backprop_baseline_run5/0/embed_0.npy")
+    #parser.add_argument("--init_embed_path",type=str,default="None") #"/home/s1686853/lstm_backprop_experiments/backprop_baseline_run5/0/embed_0.npy")
+    #parser.add_argument("--init_embed_path",type=str,default="/home/s1686853/lstm_backprop_experiments/backprop_baseline_run5/0/embed_0.npy")
 
     args = parser.parse_args()
     print("Args parsed")
@@ -737,9 +738,9 @@ if __name__ =='__main__':
 
     #define networks
     if args.network_type == "pc":
-        net = PC_LSTM(input_size, hidden_size,output_size,vocab_size,batch_size,inference_learning_rate,weight_learning_rate,n_inference_steps,use_embedding=False)
+        net = PC_LSTM(input_size, hidden_size,output_size,vocab_size,batch_size,inference_learning_rate,weight_learning_rate,n_inference_steps,use_embedding=True)
     elif args.network_type == "backprop":
-        net = Backprop_LSTM(input_size,hidden_size,output_size,vocab_size,batch_size,weight_learning_rate,use_embedding=False)
+        net = Backprop_LSTM(input_size,hidden_size,output_size,vocab_size,batch_size,weight_learning_rate,use_embedding=True)
     else:
         raise Exception("Unknown network type entered")
 

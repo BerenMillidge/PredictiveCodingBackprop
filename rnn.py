@@ -1,5 +1,5 @@
 import tensorflow as tf
-import torch 
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
@@ -19,7 +19,7 @@ from datasets import *
 def rnn_accuracy(model, target_batch):
     accuracy = 0
     L, _, B = target_batch.shape
-    for i in range(len(model.y_preds)): # this loop is over the seq_len 
+    for i in range(len(model.y_preds)): # this loop is over the seq_len
       for b in range(B):
         if torch.argmax(target_batch[i,:,b]) ==torch.argmax(model.y_preds[i][:,b]):
           accuracy+=1
@@ -65,7 +65,7 @@ class PC_RNN(object):
 
   def infer(self, input_seq, target_seq,fixed_predictions=True):
     with torch.no_grad():
-      #input sequence = [list of [Batch_size x Feature_Dimension]] seq len 
+      #input sequence = [list of [Batch_size x Feature_Dimension]] seq len
       self.e_ys = [[] for i in range(len(target_seq))] #ouptut prediction errors
       self.e_hs = [[] for i in range(len(input_seq))] # hidden state prediction errors
       for i, (inp, targ) in reversed(list(enumerate(zip(input_seq,target_seq)))):
@@ -132,7 +132,7 @@ class PC_RNN(object):
         self.Wy = set_tensor(torch.from_numpy(Wy))
         h0 = np.load(save_dir+"/h0.npy")
         self.h0 = set_tensor(torch.from_numpy(h0))
-  
+
   def train(self,dataset,n_epochs,logdir,savedir,seq_length,old_savedir="None",save_every=1):
     with torch.no_grad():
       if old_savedir != "None":
@@ -156,11 +156,11 @@ class PC_RNN(object):
             accs.append(acc)
             #print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)),file=output_file)
             #print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)),file=output_file)
-          if i % 200 == 0:
+          if i % 2000 == 0:
             print("FINISHED EPOCH: " + str(n) + " SAVING MODEL")
             self.save_model(logdir, savedir,losses,accs)
       return self.y_preds
-        
+
 class Backprop_RNN(object):
   def __init__(self, hidden_size, input_size, output_size,batch_size,vocab_size, fn, fn_deriv,learning_rate):
     self.hidden_size = hidden_size
@@ -186,7 +186,7 @@ class Backprop_RNN(object):
 
   def forward_sweep(self, input_seq):
     self.hs = [[] for i in range(len(input_seq)+1)]
-    self.y_preds = [[] for i in range(len(input_seq))] 
+    self.y_preds = [[] for i in range(len(input_seq))]
     self.hs[0] = self.h0
     for i,inp in enumerate(input_seq):
       self.hs[i+1] = self.fn(self.Wh @ self.hs[i] + self.Wx @ inp)
@@ -277,7 +277,7 @@ class Backprop_RNN(object):
             accs.append(acc)
             #print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)),file=output_file)
             #print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)),file=output_file)
-          if i % 200 == 0:
+          if i % 2000 == 0:
             print("FINISHED EPOCH: " + str(n) + " SAVING MODEL")
             self.save_model(logdir, savedir,losses,accs)
       return self.y_preds
@@ -291,10 +291,10 @@ if __name__ =='__main__':
     parser.add_argument("--savedir",type=str,default="savedir")
     parser.add_argument("--batch_size",type=int, default=64)
     parser.add_argument("--seq_len",type=int,default=50)
-    parser.add_argument("--hidden_size",type=int,default=1056)
-    parser.add_argument("--n_inference_steps",type=int, default=200)
+    parser.add_argument("--hidden_size",type=int,default=256)
+    parser.add_argument("--n_inference_steps",type=int, default=100)
     parser.add_argument("--inference_learning_rate",type=float,default=0.1)
-    parser.add_argument("--weight_learning_rate",type=float,default=0.0001)
+    parser.add_argument("--weight_learning_rate",type=float,default=0.001)
     parser.add_argument("--N_epochs",type=int, default=10000)
     parser.add_argument("--save_every",type=int, default=1)
     parser.add_argument("--network_type",type=str,default="backprop")
@@ -333,7 +333,3 @@ if __name__ =='__main__':
 
     #train!
     net.train(dataset, int(n_epochs),args.logdir, args.savedir,args.seq_len,old_savedir=args.old_savedir,save_every=args.save_every)
-
-
-
-

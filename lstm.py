@@ -1,6 +1,6 @@
 
 import tensorflow as tf
-import torch 
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
@@ -21,16 +21,16 @@ from datasets import *
 class PC_LSTM(object):
   def __init__(self,input_dim, hidden_dim,output_dim,vocab_size, batch_size, inference_learning_rate,weight_learning_rate, n_inference_steps_train,weight_init=gaussian_init, bias_init=zeros_init,use_embedding=True):
     self.input_dim = input_dim
-    self.hidden_dim = hidden_dim 
+    self.hidden_dim = hidden_dim
     self.output_dim = output_dim
     self.vocab_size = vocab_size
-    self.batch_size = batch_size 
-    self.inference_learning_rate = inference_learning_rate 
+    self.batch_size = batch_size
+    self.inference_learning_rate = inference_learning_rate
     self.weight_learning_rate = weight_learning_rate
     self.clamp_val = 50
     self.weight_init = weight_init
     self.bias_init = bias_init
-    self.n_inference_steps_train = n_inference_steps_train 
+    self.n_inference_steps_train = n_inference_steps_train
     self.z_dim = self.input_dim + self.hidden_dim
     self.use_embedding = use_embedding
     #initialize weights
@@ -39,7 +39,7 @@ class PC_LSTM(object):
     self.Wc = set_tensor(torch.from_numpy(np.random.normal(0,0.05,[self.hidden_dim, self.z_dim])))
     self.Wo = set_tensor(torch.from_numpy(np.random.normal(0,0.05,[self.hidden_dim, self.z_dim])))
     self.Wy = set_tensor(torch.from_numpy(np.random.normal(0,0.05,[self.output_dim, self.hidden_dim])))
-    #initialize biases 
+    #initialize biases
     self.bf = set_tensor(torch.zeros((self.hidden_dim,1)))
     self.bi = set_tensor(torch.zeros((self.hidden_dim,1)))
     self.bc = set_tensor(torch.zeros((self.hidden_dim,1)))
@@ -126,7 +126,7 @@ class PC_LSTM(object):
     i = self.mu_i[t].clone()
     f = self.mu_f[t].clone()
     e_y = true_labels - self.mu_y[t]
-  
+
     for n in range(self.n_inference_steps_train):
       #compute prediction errors
       e_h = h - self.mu_h[t]
@@ -165,7 +165,7 @@ class PC_LSTM(object):
     self.dby -= torch.sum(e_y, dim=1,keepdim=True)
 
     #compute backwards derivatives
-    dc_back = self.mu_f[t] * e_cell 
+    dc_back = self.mu_f[t] * e_cell
     dh_back = (self.Wf.T @ e_f) +(self.Wi.T @ e_i) + (self.Wo.T @ e_o) + (self.Wc.T @ e_c)
     return dc_back, dh_back
 
@@ -250,7 +250,7 @@ class PC_LSTM(object):
       else:
         #get the maximum char
         char_idx = torch.argmax(pred_y.squeeze(1))
-        
+
       if self.use_embedding:
         input_seq[n] = char_idx.reshape(1,)
       else:
@@ -353,19 +353,19 @@ class PC_LSTM(object):
           if i % 200 == 0:
             print("FINISHED EPOCH: " + str(n) + " SAVING MODEL")
             self.save_model(logdir, savedir,losses,accs)
-            
+
 
 
 
 class Backprop_LSTM(object):
   def __init__(self,input_dim, hidden_dim,output_dim,vocab_size, batch_size, learning_rate,weight_init=gaussian_init, bias_init=zeros_init,use_embedding=True):
     self.input_dim = input_dim
-    self.hidden_dim = hidden_dim 
+    self.hidden_dim = hidden_dim
     self.output_dim = output_dim
     self.vocab_size = vocab_size
-    self.batch_size = batch_size 
+    self.batch_size = batch_size
     self.clamp_val=50
-    self.learning_rate = learning_rate 
+    self.learning_rate = learning_rate
     self.weight_init = weight_init
     self.bias_init = bias_init
     self.use_embedding = use_embedding
@@ -459,7 +459,7 @@ class Backprop_LSTM(object):
         z = torch.cat((embed, hprev),axis=0)
     else:
         z = torch.cat((inp, hprev),axis=0)
-    #compute gradients    
+    #compute gradients
     dy = true_labels - self.mu_y[t]
     dh = (self.Wy.T @ dy) + dh_back  #any activation function on the output?
     do = torch.mul(sigmoid_deriv(self.mu_o_activations[t]),torch.mul(tanh(self.mu_cell[t]), dh))
@@ -482,7 +482,7 @@ class Backprop_LSTM(object):
     self.dby +=  torch.sum(dy,dim=1,keepdim=True)
 
     #compute backwards derivatives
-    dc_back = self.mu_f[t] * dcell 
+    dc_back = self.mu_f[t] * dcell
     dh_back = (self.Wf.T @ df) +(self.Wi.T @ di) + (self.Wo.T @ do) + (self.Wc.T @ dc)
     return dc_back, dh_back
 
@@ -564,7 +564,7 @@ class Backprop_LSTM(object):
       else:
         #get the maximum char
         char_idx = torch.argmax(pred_y.squeeze(1))
-        
+
       if self.use_embedding:
         input_seq[n] = char_idx.reshape(1,)
       else:
@@ -592,7 +592,7 @@ class Backprop_LSTM(object):
     embed_params = list(self.embed.parameters())
     for (i,p) in enumerate(embed_params):
         np.save(logdir + "/embed_"+str(i)+".npy",p.detach().cpu().numpy())
-        
+
     #SAVE the results to the edinburgh computer from scratch space to main space
     if losses is not None:
         np.save(logdir+ "/losses.npy", np.array(losses))
@@ -656,6 +656,9 @@ class Backprop_LSTM(object):
 
   def train(self, dataset,n_epochs,logdir, savedir,old_savedir="",init_embed_path = "None",save_every=20):
     with torch.no_grad():
+      if old_savedir == "None" and init_embed_path != "None":
+          embed = np.load(init_embed_path)
+          self.embed.weight = nn.Parameter(set_tensor(torch.from_numpy(embed)))
       if old_savedir != "None":
           self.load_model(old_savedir)
       self.net_set_parameters()
@@ -712,7 +715,7 @@ if __name__ =='__main__':
     parser.add_argument("--network_type",type=str,default="backprop")
     parser.add_argument("--sample_char",type=boolcheck,default="True")
     parser.add_argument("--old_savedir",type=str,default="None")
-    #parser.add_argument("--init_embed_path",type=str,default="None") #"/home/s1686853/lstm_backprop_experiments/backprop_baseline_run5/0/embed_0.npy")
+    parser.add_argument("--init_embed_path",type=str,default="None") #"/home/s1686853/lstm_backprop_experiments/backprop_baseline_run5/0/embed_0.npy")
     #parser.add_argument("--init_embed_path",type=str,default="/home/s1686853/lstm_backprop_experiments/backprop_baseline_run5/0/embed_0.npy")
 
     args = parser.parse_args()
@@ -746,4 +749,3 @@ if __name__ =='__main__':
 
     #train!
     net.train(dataset[0:-2], int(n_epochs),args.logdir, args.savedir,old_savedir=args.old_savedir,init_embed_path = args.init_embed_path,save_every=args.save_every)
-

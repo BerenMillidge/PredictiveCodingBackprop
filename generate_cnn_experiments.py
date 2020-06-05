@@ -9,7 +9,7 @@ exp_name = str(sys.argv[6])
 old_savename = "None"
 base_call = "python cnn.py --network_type " + network_type + " --dataset " + dataset +" --learning_rate 0.00025 --n_inference_steps 100"
 output_file = open(generated_name, "w")
-seeds = 3
+seeds = 5
 for s in range(seeds):
     lpath = log_path + "/"+str(exp_name) + "/" + str(s)
     spath = save_path + "/" + str(exp_name) + "/" + str(s)

@@ -1,4 +1,5 @@
-import requests 
+#simple utility file to download the rnn names data onto the head node of the cluster
+import requests
 import glob
 import zipfile
 import os
@@ -11,4 +12,5 @@ def download_extract_names_data():
   with zipfile.ZipFile("data.zip","r") as zip_ref:
       zip_ref.extractall("data")
 
-download_extract_names_data()
+if __name__ = "__main__":
+    download_extract_names_data()

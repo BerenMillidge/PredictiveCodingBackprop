@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import torch 
+import torch
 import torchvision
 import torchvision.transforms as transforms
 from copy import deepcopy
@@ -14,7 +14,7 @@ import subprocess
 import argparse
 from datetime import datetime
 from datasets import *
-from utils import * 
+from utils import *
 from layers import *
 
 
@@ -78,9 +78,9 @@ class PCNet(object):
       self.prediction_errors[-1] = self.mus[-1] - self.outs[-1] #setup final prediction errors
       self.predictions[-1] = self.prediction_errors[-1].clone()
       for n in range(self.n_inference_steps_train):
-      #reversed inference 
+      #reversed inference
         for j in reversed(range(len(self.layers))):
-          if j != 0: 
+          if j != 0:
             self.prediction_errors[j] = self.mus[j] - self.outs[j]
             self.predictions[j] = self.layers[j].backward(self.prediction_errors[j+1])
             dx_l = self.prediction_errors[j] - self.predictions[j]
@@ -94,7 +94,7 @@ class PCNet(object):
       return L,acc,weight_diffs
 
   def test_accuracy(self,testset):
-    accs = [] 
+    accs = []
     for i,(inp, label) in enumerate(testset):
         pred_y = self.no_grad_forward(inp.to(DEVICE))
         acc =accuracy(pred_y,onehot(label).to(DEVICE))
@@ -145,7 +145,7 @@ class PCNet(object):
 
 class Backprop_CNN(object):
   def __init__(self, layers):
-    self.layers = layers 
+    self.layers = layers
     self.xs = [[] for i in range(len(self.layers)+1)]
     self.e_ys = [[] for i in range(len(self.layers)+1)]
     for l in self.layers:
@@ -188,7 +188,7 @@ class Backprop_CNN(object):
           l.load_layer(old_savedir,i)
 
   def test_accuracy(self,testset):
-    accs = [] 
+    accs = []
     for i,(inp, label) in enumerate(testset):
         pred_y = self.forward(inp.to(DEVICE))
         acc =accuracy(pred_y,onehot(label).to(DEVICE))
@@ -223,8 +223,6 @@ class Backprop_CNN(object):
         print("TEST ACCURACY: ", mean_test_acc)
         print("SAVING MODEL")
         self.save_model(logdir,savedir,losses,accs,test_accs)
-
-
 
 if __name__ == '__main__':
     global DEVICE
@@ -295,5 +293,3 @@ if __name__ == '__main__':
     else:
         raise Exception("Network type not recognised: must be one of 'backprop', 'pc'")
     net.train(dataset[0:-2],testset[0:-2],args.N_epochs,args.n_inference_steps,args.savedir,args.logdir,args.old_savedir,args.save_every,args.print_every)
-
-

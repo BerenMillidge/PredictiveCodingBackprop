@@ -1,6 +1,5 @@
-
 import numpy as np
-import torch 
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from copy import deepcopy
@@ -40,7 +39,7 @@ class ConvLayer(object):
     dW = torch.sum(dW,dim=0)
     dW = dW.reshape((self.num_filters,self.num_channels,self.kernel_size,self.kernel_size))
     if update_weights:
-      if sign_reverse==True:
+      if sign_reverse==True: # This is necessary because PC and backprop learn gradients with different signs grad_pc = -grad_bp
         self.kernel -= self.learning_rate * torch.clamp(dW * 2,-50,50)
       else:
         self.kernel += self.learning_rate * torch.clamp(dW * 2,-50,50)
@@ -62,7 +61,7 @@ class ConvLayer(object):
 
   def save_layer(self,logdir,i):
       np.save(logdir +"/layer_"+str(i)+"_weights.npy",self.kernel.detach().cpu().numpy())
-  
+
   def load_layer(self,logdir,i):
     kernel = np.load(logdir +"/layer_"+str(i)+"_weights.npy")
     self.kernel = set_tensor(torch.from_numpy(kernel))
@@ -75,9 +74,8 @@ class MaxPool(object):
 
   def forward(self,x):
     out, self.idxs = F.max_pool2d(x, self.kernel_size,return_indices=True)
-    #print(out.shape)
     return out
-  
+
   def backward(self, y):
     return F.max_unpool2d(y,self.idxs, self.kernel_size)
 
@@ -101,7 +99,7 @@ class AvgPool(object):
     self.kernel_size = kernel_size
     self.device = device
     self.activations = torch.empty(1)
-  
+
   def forward(self, x):
     self.B_in,self.C_in,self.H_in,self.W_in = x.shape
     return F.avg_pool2d(x,self.kernel_size)
@@ -119,8 +117,6 @@ class AvgPool(object):
 
   def load_layer(self,logdir,i):
     pass
-
-
 
 class ProjectionLayer(object):
   def __init__(self,input_size, output_size,f,df,learning_rate,device='cpu'):
@@ -176,13 +172,12 @@ class FCLayer(object):
     self.output_size = output_size
     self.batch_size = batch_size
     self.learning_rate = learning_rate
-    self.f = f 
+    self.f = f
     self.df = df
     self.device = device
     self.weights = torch.empty([self.input_size,self.output_size]).normal_(mean=0.0,std=0.05).to(self.device)
 
   def forward(self,x):
-    #self.inp = x.detach()
     self.inp = x.clone()
     self.activations = torch.matmul(self.inp, self.weights)
     return self.f(self.activations)
@@ -194,14 +189,11 @@ class FCLayer(object):
 
   def update_weights(self,e,update_weights=False,sign_reverse=False):
     self.fn_deriv = self.df(self.activations)
-    #print("fnderiv: ", self.fn_deriv.shape)
-    #print("inp: ", self.inp.T.shape)
-    #print("inputs; ", e.shape)
     dw = torch.matmul(self.inp.T, e * self.fn_deriv)
     if update_weights:
       if sign_reverse==True:
         self.weights -= self.learning_rate * torch.clamp(dw*2,-50,50)
-      else: 
+      else:
         self.weights += self.learning_rate * torch.clamp(dw*2,-50,50)
     return dw
 

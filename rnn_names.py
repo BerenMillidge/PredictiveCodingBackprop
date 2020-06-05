@@ -1,10 +1,11 @@
-import torch 
+# This is the RNN for the pytorch names data
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import os
 import time
-import requests 
+import requests
 import glob
 import zipfile
 import unicodedata
@@ -43,9 +44,6 @@ def to_ascii(s):
         and c in all_letters
     )
 
-print(to_ascii('Ślusàrski'))
-
-
 def read_lines(filename):
   lines = open(filename, encoding='utf-8').read().strip().split('\n')
   return [to_ascii(line) for line in lines]
@@ -81,11 +79,6 @@ def line2tensor(line):
     tensor[li][0][char2idx(letter)] = 1
   return tensor
 
-print(char2tensor("J"))
-print(line2tensor("Bibblebob"))
-
-
-
 def category_from_output(output):
   top_cat = torch.argmax(output).item()
   return all_categories[top_cat],top_cat
@@ -105,13 +98,6 @@ def random_training_example():
   category_tensor= categoryTensor(category)
   line_tensor = line2tensor(line)
   return category, line, category_tensor, line_tensor
-
-for i in range(10):
-    category, line, category_tensor, line_tensor = random_training_example()
-    print('category =', category, '/ line =', line)
-    print("category tensor = ", category_tensor.shape)
-    print("line_tensor = ", line_tensor.shape )
-
 
 class PC_RNN(object):
   def __init__(self, hidden_size, input_size, output_size,batch_size, fn, fn_deriv,inference_learning_rate, weight_learning_rate, n_inference_steps,device="cpu"):
@@ -153,10 +139,10 @@ class PC_RNN(object):
 
   def infer(self, input_seq, targ,fixed_predictions=True):
     with torch.no_grad():
-      #input sequence = [list of [Batch_size x Feature_Dimension]] seq len 
+      #input sequence = [list of [Batch_size x Feature_Dimension]] seq len
       #self.e_ys = [[] for i in range(len(target_seq))] #ouptut prediction errors
       self.e_hs = [[] for i in range(len(input_seq))] # hidden state prediction errors
-      # test order of for loops -- i.e. iterate each iteration sweep through the whole RNN or 
+      # test order of for loops -- i.e. iterate each iteration sweep through the whole RNN or
       for i, inp in reversed(list(enumerate(input_seq))):
         #print("Inference step: ", n)
         #hdelta_sum = 0
@@ -173,7 +159,6 @@ class PC_RNN(object):
           if i == len(input_seq) -1:
             hdelta -= self.Wy.T @ (self.e_ys * linear_deriv(self.Wy @ self.h_preds[i+1]))
           if i < len(input_seq)-1:
-            #fn_deriv =  self.fn_deriv(self.Wh @ self.hs[i] + self.Wx @ inp)
             fn_deriv =  self.fn_deriv(self.Wh @ self.h_preds[i+1] + self.Wx @ input_seq[i+1])
             hdelta -= self.Wh.T @ (self.e_hs[i+1] * fn_deriv)
           self.hs[i+1] -= self.inference_learning_rate * hdelta
@@ -188,11 +173,6 @@ class PC_RNN(object):
       dWh = set_tensor(torch.zeros_like(self.Wh))
       # go back in reverse through the graph and sum up everything
       for i in reversed(list(range(len(input_seq)))):
-        #fn_deriv = self.fn_deriv(self.Wh @ self.hs[i] + self.Wx @ input_seq[i])
-        #dWy += (self.e_ys[i] * linear_deriv(self.Wy @ self.hs[i+1])) @ self.hs[i+1].T #if self.e_ys[i] is not None else torch.zeros_like(self.Wy)
-        #dWx += (self.e_hs[i] * fn_deriv) @ input_seq[i].T
-        #dWh += (self.e_hs[i] * fn_deriv) @ self.hs[i].T
-        #print("in update weights: ",i)
         fn_deriv = self.fn_deriv(self.Wh @ self.h_preds[i] + (self.Wx @ input_seq[i]))
         if i == len(input_seq)-1:
           dWy += (self.e_ys * linear_deriv(self.Wy @ self.h_preds[i+1])) @ self.h_preds[i+1].T #if self.e_ys[i] is not None else torch.zeros_like(self.Wy)
@@ -259,9 +239,6 @@ class PC_RNN(object):
         if n % 200 == 0:
           self.save_model(logdir,savedir, losses,accs)
 
-
-# let's generate a comparison backprop RNN so I can have the analytiacl weight updates done here which would be nice and straightforward to do
-# so what is the ultimate goal here? it's really hard to tell. let's focus and get the weight update done, which is very important overall to be able to figure out
 class Backprop_RNN(object):
   def __init__(self, hidden_size, input_size, output_size,batch_size, fn, fn_deriv,learning_rate):
     self.hidden_size = hidden_size
@@ -303,7 +280,6 @@ class Backprop_RNN(object):
       if i < len(input_seq) -1:
         fn_deriv =  self.fn_deriv(self.Wh @ self.hs[i+1] + self.Wx @ input_seq[i+1])
         dhdh += self.Wh.T @ (self.dhs[i+1] * fn_deriv)
-      #print(self.dhs[i])
       self.dhs[i]= dhdh
     return self.dhs, self.dys
 
@@ -384,7 +360,7 @@ class Backprop_RNN(object):
 if __name__ =='__main__':
     parser = argparse.ArgumentParser()
     subprocess.call(['echo', 'Initialized'])
-        #parsing arguments
+    #parsing arguments
     parser.add_argument("--logdir", type=str, default="logs")
     parser.add_argument("--savedir",type=str,default="savedir")
     parser.add_argument("--batch_size",type=int, default=1)
@@ -427,6 +403,3 @@ if __name__ =='__main__':
     #train!
     subprocess.call(['echo','beginning training'])
     net.train(int(n_epochs),args.logdir, args.savedir,old_savedir=args.old_savedir,save_every=args.save_every)
-
-
-

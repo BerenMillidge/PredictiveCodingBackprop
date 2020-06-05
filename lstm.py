@@ -149,21 +149,18 @@ class PC_LSTM(object):
       c -= self.inference_learning_rate * dc
       i -= self.inference_learning_rate * di
       f -= self.inference_learning_rate * df
-
     #accumulate weights
     self.dWf -= e_f @ z.T
     self.dWi -= e_i @ z.T
     self.dWc -= e_c @ z.T
     self.dWo -= e_o @ z.T
     self.dWy -= e_y @ self.mu_h[t].T
-
     #accumulate biases
     self.dbf -= torch.sum(e_f, dim=1,keepdim=True)
     self.dbi -= torch.sum(e_i, dim=1,keepdim=True)
     self.dbc -= torch.sum(e_c, dim=1,keepdim=True)
     self.dbo -= torch.sum(e_o, dim=1,keepdim=True)
     self.dby -= torch.sum(e_y, dim=1,keepdim=True)
-
     #compute backwards derivatives
     dc_back = self.mu_f[t] * e_cell
     dh_back = (self.Wf.T @ e_f) +(self.Wi.T @ e_i) + (self.Wo.T @ e_o) + (self.Wc.T @ e_c)
@@ -320,7 +317,7 @@ class PC_LSTM(object):
     self.embed.weight = nn.Parameter(set_tensor(torch.from_numpy(embed)))
 
   def train(self,dataset,n_epochs,logdir,savedir,old_savedir="None",init_embed_path="None",save_every=20):
-    #load initial embedding from backprop version
+    #load initial embedding from backprop version. We can't train the embedding here but make it sensible seeming.
     if old_savedir == "None" and init_embed_path != "None":
         embed = np.load(init_embed_path)
         self.embed.weight = nn.Parameter(set_tensor(torch.from_numpy(embed)))
@@ -353,8 +350,6 @@ class PC_LSTM(object):
           if i % 200 == 0:
             print("FINISHED EPOCH: " + str(n) + " SAVING MODEL")
             self.save_model(logdir, savedir,losses,accs)
-
-
 
 
 class Backprop_LSTM(object):
@@ -473,19 +468,16 @@ class Backprop_LSTM(object):
     self.dWc += dc @ z.T
     self.dWo += do @ z.T
     self.dWy += dy @ self.mu_h[t].T
-
-
+    #accumulate biases
     self.dbf += torch.sum(df,dim=1,keepdim=True)
     self.dbi += torch.sum(di ,dim=1,keepdim=True)
     self.dbc += torch.sum(dc ,dim=1,keepdim=True)
     self.dbo += torch.sum(do ,dim=1,keepdim=True)
     self.dby +=  torch.sum(dy,dim=1,keepdim=True)
-
     #compute backwards derivatives
     dc_back = self.mu_f[t] * dcell
     dh_back = (self.Wf.T @ df) +(self.Wi.T @ di) + (self.Wo.T @ do) + (self.Wc.T @ dc)
     return dc_back, dh_back
-
 
   def update_parameters(self):
     #update weights
@@ -650,7 +642,6 @@ class Backprop_LSTM(object):
     self.bo = nn.Parameter(self.bo)
     self.by = nn.Parameter(self.by)
     #self.embed = nn.Parameter(self.embed)
-    #learn initial weights?!
     self.init_h = nn.Parameter(self.init_h)
     self.init_cell = nn.Parameter(self.init_cell)
 
@@ -693,10 +684,6 @@ class Backprop_LSTM(object):
               print("FINISHED EPOCH: " + str(n) + " SAVING MODEL")
               self.save_model(logdir, savedir,losses,accs)
 
-
-
-print("reached end of file before")
-
 if __name__ =='__main__':
     parser = argparse.ArgumentParser()
     print("Initialized")
@@ -715,8 +702,7 @@ if __name__ =='__main__':
     parser.add_argument("--network_type",type=str,default="backprop")
     parser.add_argument("--sample_char",type=boolcheck,default="True")
     parser.add_argument("--old_savedir",type=str,default="None")
-    parser.add_argument("--init_embed_path",type=str,default="None") #"/home/s1686853/lstm_backprop_experiments/backprop_baseline_run5/0/embed_0.npy")
-    #parser.add_argument("--init_embed_path",type=str,default="/home/s1686853/lstm_backprop_experiments/backprop_baseline_run5/0/embed_0.npy")
+    parser.add_argument("--init_embed_path",type=str,default="None")
 
     args = parser.parse_args()
     print("Args parsed")

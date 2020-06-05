@@ -1,6 +1,5 @@
-
 import numpy as np
-import torch 
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
@@ -12,19 +11,18 @@ import matplotlib.pyplot as plt
 global DEVICE
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+### General Utils ###
 def boolcheck(x):
     return str(x).lower() in ["true", "1", "yes"]
 
 def set_tensor(xs):
     return xs.float().to(DEVICE)
 
-       
 def edge_zero_pad(img,d):
-  N,C, h,w = img.shape 
+  N,C, h,w = img.shape
   x = torch.zeros((N,C,h+(d*2),w+(d*2))).to(DEVICE)
   x[:,:,d:h+d,d:w+d] = img
   return x
-
 
 def accuracy(out, L):
   B,l = out.shape
@@ -32,14 +30,14 @@ def accuracy(out, L):
   for i in range(B):
     if torch.argmax(out[i,:]) == torch.argmax(L[i,:]):
       total +=1
-  return total/ B 
+  return total/ B
 
 def sequence_accuracy(model, target_batch):
     accuracy = 0
     L = len(target_batch)
     _,B = target_batch[0].shape
     s = ""
-    for i in range(len(target_batch)): # this loop is over the seq_len 
+    for i in range(len(target_batch)): # this loop is over the seq_len
       s += str(torch.argmax(model.mu_y[i][:,0]).item()) + " " + str(torch.argmax(target_batch[i][:,0]).item()) + "  "
       for b in range(B):
         #print("target idx: ", torch.argmax(target_batch[i][:,b]).item())
@@ -51,7 +49,7 @@ def sequence_accuracy(model, target_batch):
 
 def custom_onehot(idx, shape):
   ret = set_tensor(torch.zeros(shape))
-  ret[idx] =1 
+  ret[idx] =1
   return ret
 
 def onehot(arr, vocab_size):
@@ -97,7 +95,7 @@ def inverse_onehot(arr):
             ret[l,b] = v
     return ret
 
-#Activation functions
+### Activation functions ###
 def tanh(xs):
     return torch.tanh(xs)
 
@@ -116,7 +114,7 @@ def relu(xs):
 def relu_deriv(xs):
   rel = relu(xs)
   rel[rel>0] = 1
-  return rel 
+  return rel
 
 def softmax(xs):
   return torch.nn.softmax(xs)
@@ -128,7 +126,7 @@ def sigmoid_deriv(xs):
   return F.sigmoid(xs) * (torch.ones_like(xs) - F.sigmoid(xs))
 
 
-## initializations functions
+### Initialization Functions ###
 def gaussian_init(W,mean=0.0, std=0.05):
   return W.normal_(mean=0.0,std=0.05)
 

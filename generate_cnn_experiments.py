@@ -17,6 +17,6 @@ for s in range(seeds):
         old_savepath = save_path + "/" + str(old_savename) + "/" + str(s)
     else:
         old_savepath = "None"
-    final_call = base_call + " --logdir " + str(lpath) + " --savedir " + str(spath) + " " +" --old_savedir " + str(old_savepath) 
+    final_call = base_call + " --logdir " + str(lpath) + " --savedir " + str(spath) + " " +" --old_savedir " + str(old_savepath)
     print(final_call)
     print(final_call, file=output_file)

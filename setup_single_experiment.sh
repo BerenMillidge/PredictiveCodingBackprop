@@ -1,19 +1,6 @@
 #!/bin/bash
 
-
-# FMI about options, see https://slurm.schedmd.com/sbatch.html
-# N.B. options supplied on the command line will overwrite these set here
-
-# *** To set any of these options, remove the first comment hash '# ' ***
-# i.e. `# # SBATCH ...` -> `#SBATCH ...`
-
-#SBATCH --job-name=TESETJOBNAME
-
-# Location for stdout log - see https://slurm.schedmd.com/sbatch.html#lbAH
-# #SBATCH --output=/home/%u/slurm_logs/slurm-%A_%a.out
-
-# Location for stderr log - see https://slurm.schedmd.com/sbatch.html#lbAH
-# #SBATCH --error=/home/%u/slurm_logs/slurm-%A_%a.out
+### BASH SCRIPT TO RUN SET OF EXPERIMENT GENERATED FROM EXPERIMENT FILE ON EDINBURGH CLUSTER ###
 
 # Maximum number of nodes to use for the job
 # #SBATCH --nodes=1
@@ -55,7 +42,7 @@ conda activate ${CONDA_NAME}
 
 echo "Moving input data to the compute node's scratch space: $SCRATCH_DISK"
 
-# input data directory path on the DFS - change line below if loc different
+# input data directory path on the DFS
 repo_home=/home/${USER}/PredictiveCodingBackpropStaging
 mnist_path=${repo_home}/mnist_data
 cifar_path=${repo_home}/cifar_data
@@ -76,16 +63,8 @@ mkdir -p ${svhn_dest_path}  # make it if required
 names_dest_path=${SCRATCH_DISK}/${USER}/data
 mkdir -p ${names_dest_path}
 
-# Important notes about rsync:
-# * the --compress option is going to compress the data before transfer to send
-#   as a stream. THIS IS IMPORTANT - transferring many files is very very slow
-# * the final slash at the end of ${src_path}/ is important if you want to send
-#   its contents, rather than the directory itself. For example, without a
-#   final slash here, we would create an extra directory at the destination:
-#       ${SCRATCH_HOME}/project_name/data/input/input
-# * for more about the (endless) rsync options, see the docs:
-#       https://download.samba.org/pub/rsync/rsync.html
 
+# rsync data across from headnode to compute node
 rsync --archive --update --compress --progress ${mnist_path}/ ${mnist_dest_path}
 echo "Rsynced mnist"
 rsync --archive --update --compress --progress ${cifar_path}/ ${cifar_dest_path}
@@ -97,20 +76,12 @@ echo "Rsynced svhn"
 rsync --archive --update --compress --progress ${names_path}/ ${names_dest_path}
 echo "Rsynced names data"
 
-#echo "Running experiment command"
-#pip install git+https://github.com/Bmillidgework/exploration-baselines
+echo "Running experiment command"
 experiment_text_file=$1
 COMMAND="`sed \"${SLURM_ARRAY_TASK_ID}q;d\" ${experiment_text_file}`"
-#python main.py --env_name "SparseBipedalWalker" --logdir ${log_path} --action_noise "0.1" --plan_horizon "40" --action_repeat "2" --ensemble_size "15" --use_exploration "True" --use_reward "True" --expl_scale "0.1" --n_episodes "10"
 echo "Running provided command: ${COMMAND}"
 eval "${COMMAND}"
 echo "Command ran successfully!"
-#echo "Experiment Finished. Moving data back to DFS"
-#echo "log path: ${log_path}"
-#save_path=/home/${USER}/fe_mbrl/bipedal_walker_initial_tests/${SLURM_ARRAY_TASK_ID}
-#mkdir -p ${save_path}
-#echo "save_path: ${save_path}"
-#rsync --archive --update --compress --progress ${log_path}/ ${save_path}
 
 echo ""
 echo "============"

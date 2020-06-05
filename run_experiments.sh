@@ -1,4 +1,6 @@
 #!/bin/bash
+### Bash script to start a slurm job on the Edinburgh cluster ###
+
 source ~/.bashrc
 set -e
 SCRATCH_DISK=/disk/scratch
@@ -16,7 +18,6 @@ LOG_PATH=${SCRATCH_DISK}/${USER}/${LOG_NAME}
 echo "Generating Experiment File"
 mkdir -p ${SAVE_PATH}
 python ${FILE_GENERATOR_NAME} ${EXPERIMENT_FILE_NAME} ${LOG_PATH} ${SAVE_PATH} ${NETWORK_TYPE} ${DATASET} ${EXP_NAME}
-
 
 echo "Running parallel batch"
 N_EXPERIMENTS=`cat ${EXPERIMENT_FILE_NAME} | wc -l`

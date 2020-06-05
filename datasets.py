@@ -1,12 +1,11 @@
 import tensorflow as tf
-import torch 
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import torchvision
 import torchvision.transforms as transforms
 from utils import *
-
 
 def imshow(img):
     img = img / 2 + 0.5     # unnormalize
@@ -23,8 +22,6 @@ def show_dataset(dataset):
     imshow(torchvision.utils.make_grid(images))
     # print labels
     print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
-
-
 
 def get_cnn_dataset(dataset, batch_size):
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5))])
@@ -81,12 +78,10 @@ def get_cnn_dataset(dataset, batch_size):
     print("Test: ", len(test_data))
     return train_data, test_data
 
-
 def split_input_target(chunk):
     input_text = chunk[:-1]
     target_text = chunk[1:]
     return input_text, target_text
-
 
 def get_lstm_dataset(seq_length, batch_size,buffer_size=10000):
     path_to_file = tf.keras.utils.get_file('shakespeare.txt', 'https://storage.googleapis.com/download.tensorflow.org/data/shakespeare.txt')
@@ -107,4 +102,3 @@ def get_lstm_dataset(seq_length, batch_size,buffer_size=10000):
     #get dataset in right format
     vocab_size = len(vocab)
     return dataset, vocab_size,char2idx,idx2char
-

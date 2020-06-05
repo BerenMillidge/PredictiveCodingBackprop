@@ -124,14 +124,14 @@ class PC_RNN(object):
     subprocess.call(['echo','saved at time: ' + str(current_time)])
 
   def load_model(self, save_dir):
-        Wh = np.load(save_dir+"/Wh.npy")
-        self.Wh = set_tensor(torch.from_numpy(Wh))
-        Wx = np.load(save_dir+"/Wx.npy")
-        self.Wx = set_tensor(torch.from_numpy(Wx))
-        Wy = np.load(save_dir+"/Wy.npy")
-        self.Wy = set_tensor(torch.from_numpy(Wy))
-        h0 = np.load(save_dir+"/h0.npy")
-        self.h0 = set_tensor(torch.from_numpy(h0))
+    Wh = np.load(save_dir+"/Wh.npy")
+    self.Wh = set_tensor(torch.from_numpy(Wh))
+    Wx = np.load(save_dir+"/Wx.npy")
+    self.Wx = set_tensor(torch.from_numpy(Wx))
+    Wy = np.load(save_dir+"/Wy.npy")
+    self.Wy = set_tensor(torch.from_numpy(Wy))
+    h0 = np.load(save_dir+"/h0.npy")
+    self.h0 = set_tensor(torch.from_numpy(h0))
 
   def train(self,dataset,n_epochs,logdir,savedir,seq_length,old_savedir="None",save_every=1):
     with torch.no_grad():
@@ -154,8 +154,6 @@ class PC_RNN(object):
             print("Accuracy: ", acc)
             losses.append(loss)
             accs.append(acc)
-            #print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)),file=output_file)
-            #print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)),file=output_file)
           if i % 2000 == 0:
             print("FINISHED EPOCH: " + str(n) + " SAVING MODEL")
             self.save_model(logdir, savedir,losses,accs)
@@ -275,8 +273,6 @@ class Backprop_RNN(object):
             print("Accuracy: ", acc)
             losses.append(loss)
             accs.append(acc)
-            #print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char = True)),file=output_file)
-            #print("SAMPLED TEXT : " + str(self.sample_sentence(input_seq[0][int(np.random.uniform(low=0,high=self.batch_size))],len(input_seq),sample_char=False)),file=output_file)
           if i % 2000 == 0:
             print("FINISHED EPOCH: " + str(n) + " SAVING MODEL")
             self.save_model(logdir, savedir,losses,accs)
@@ -286,7 +282,6 @@ class Backprop_RNN(object):
 if __name__ =='__main__':
     parser = argparse.ArgumentParser()
     print("Initialized")
-        #parsing arguments
     parser.add_argument("--logdir", type=str, default="logs")
     parser.add_argument("--savedir",type=str,default="savedir")
     parser.add_argument("--batch_size",type=int, default=64)

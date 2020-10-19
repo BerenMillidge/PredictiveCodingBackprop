@@ -12,4 +12,15 @@ The code is written in [Pyython 3.x] and uses the following packages:
 * [TensorFlow] version 1.x (only for downloading shakespeare dataset)
 * [matplotlib] for plotting figures
 
+## Citation
 
+If you enjoyed the paper or found the code useful, please cite as: 
+
+```
+@article{millidge2020predictive,
+  title={Predictive Coding Approximates Backprop along Arbitrary Computation Graphs},
+  author={Millidge, Beren and Tschantz, Alexander and Buckley, Christopher L},
+  journal={arXiv preprint arXiv:2006.04182},
+  year={2020}
+}
+```

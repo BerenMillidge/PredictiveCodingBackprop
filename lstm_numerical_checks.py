@@ -127,11 +127,11 @@ def numerical_check(dataset,vocab_size, batch_size,n_inference_steps = 150):
     
 
 def seq_len_divergence_comparison(seq_lens, batch_size=64):
-  seq_len_divergences = []
+      seq_len_divergences = []
   for i, seq_len in enumerate(seq_lens):
     print("Seq len: ", seq_len)
     dataset, vocab_size,char2idx,idx2char = get_lstm_dataset(seq_len, batch_size)
-    true_Wf_grad, true_Wi_grad, true_Wc_grad, true_Wo_grad, true_Wy_grad, PC_dWf, PC_dWi, PC_dWc, PC_dWo, PC_dWy  = numerical_check(dataset,vocab_size,batch_size)
+    true_Wf_grad, true_Wi_grad, true_Wc_grad, true_Wo_grad, true_Wy_grad, PC_dWf, PC_dWi, PC_dWc, PC_dWo, PC_dWy  = numerical_check_2(dataset,vocab_size,batch_size)
     divergence = 0
     divergence += torch.sum(torch.square(true_Wf_grad - PC_dWf)).item()
     divergence += torch.sum(torch.square(true_Wi_grad - PC_dWi)).item()
@@ -140,11 +140,13 @@ def seq_len_divergence_comparison(seq_lens, batch_size=64):
     divergence += torch.sum(torch.square(true_Wy_grad - PC_dWy)).item()
     seq_len_divergences.append(divergence)
   # plot
+  fig = plt.figure()
   plt.title("Divergence against sequence length")
   plt.xlabel("Sequence length")
   plt.ylabel("Gradient Divergence")
+  fig.savefig("seq_len_divergence_comparison.jpg")
   plt.plot(seq_lens, seq_len_divergences)
-  plt.show()
+  return fig
 
 def convergence_num_iterations_comparison(seq_lens, threshold, batch_size = 64,inference_steps_increment = 5):
   iterations_to_convergence = []
@@ -156,7 +158,7 @@ def convergence_num_iterations_comparison(seq_lens, threshold, batch_size = 64,i
     print("reaching threshold: ", divergence <= threshold)
     while divergence >= threshold:
       print("inside run numerical check")
-      true_Wf_grad, true_Wi_grad, true_Wc_grad, true_Wo_grad, true_Wy_grad, PC_dWf, PC_dWi, PC_dWc, PC_dWo, PC_dWy  = numerical_check(dataset,vocab_size,batch_size,n_inference_steps = num_iterations + inference_steps_increment)
+      true_Wf_grad, true_Wi_grad, true_Wc_grad, true_Wo_grad, true_Wy_grad, PC_dWf, PC_dWi, PC_dWc, PC_dWo, PC_dWy  = numerical_check_2(dataset,vocab_size,batch_size,n_inference_steps = num_iterations + inference_steps_increment)
       divergence = 0
       divergence += torch.sum(torch.square(true_Wf_grad - PC_dWf)).item()
       divergence += torch.sum(torch.square(true_Wi_grad - PC_dWi)).item()
@@ -167,13 +169,14 @@ def convergence_num_iterations_comparison(seq_lens, threshold, batch_size = 64,i
       num_iterations +=inference_steps_increment
     iterations_to_convergence.append(num_iterations)
   # plot
+  fig = plt.figure()
   plt.title("Numerical iterations to convergence against sequence length")
   plt.ylabel("Iterations before convergence")
   plt.xlabel("Sequence Length")
   plt.plot(seq_lens, iterations_to_convergence)
+  fig.savefig("convergence_num_iterations_comparison.jpg")
   plt.show()
-
-
+  return fig
 
 
 if __name__ == "__main__":

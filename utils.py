@@ -117,7 +117,7 @@ def relu_deriv(xs):
   return rel
 
 def softmax(xs):
-  return torch.nn.softmax(xs)
+  return F.softmax(xs)
 
 def sigmoid(xs):
   return F.sigmoid(xs)

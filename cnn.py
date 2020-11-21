@@ -77,7 +77,7 @@ class PCNet(object):
         self.mus[i+1] = l.forward(self.mus[i])
         self.outs[i+1] = self.mus[i+1].clone()
       self.mus[-1] = label.clone() #setup final label
-      self.prediction_errors[-1] = self.loss_fn_deriv(self.outs[-1], self.mus[-1])#self.mus[-1] - self.outs[-1] #setup final prediction errors
+      self.prediction_errors[-1] = -self.loss_fn_deriv(self.outs[-1], self.mus[-1])#self.mus[-1] - self.outs[-1] #setup final prediction errors
       self.predictions[-1] = self.prediction_errors[-1].clone()
       for n in range(self.n_inference_steps_train):
       #reversed inference

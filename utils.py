@@ -126,6 +126,33 @@ def sigmoid_deriv(xs):
   return F.sigmoid(xs) * (torch.ones_like(xs) - F.sigmoid(xs))
 
 
+### loss functions
+def mse_loss(out, label):
+      return torch.sum((out-label)**2)
+
+def mse_deriv(out,label):
+      return 2 * (out - label)
+
+ce_loss = nn.CrossEntropyLoss()
+
+def cross_entropy_loss(out,label):
+      return ce_loss(out,label)
+
+def my_cross_entropy(out,label):
+      return -torch.sum(label * torch.log(out + 1e-6))
+
+def cross_entropy_deriv(out,label):
+      return out - label
+
+def parse_loss_function(loss_arg):
+      if loss_arg == "mse":
+            return mse_loss, mse_deriv
+      elif loss_arg == "crossentropy":
+            return my_cross_entropy, cross_entropy_deriv
+      else:
+            raise ValueError("loss argument not expected. Can be one of 'mse' and 'crossentropy'. You inputted " + str(loss_arg))
+
+
 ### Initialization Functions ###
 def gaussian_init(W,mean=0.0, std=0.05):
   return W.normal_(mean=0.0,std=0.05)

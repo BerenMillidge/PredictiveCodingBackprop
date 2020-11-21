@@ -19,11 +19,13 @@ from layers import *
 
 
 class PCNet(object):
-  def __init__(self, layers, n_inference_steps_train, inference_learning_rate,device='cpu',numerical_check=False):
+  def __init__(self, layers, n_inference_steps_train, inference_learning_rate,loss_fn, loss_fn_deriv,device='cpu',numerical_check=False):
     self.layers= layers
     self.n_inference_steps_train = n_inference_steps_train
     self.inference_learning_rate = inference_learning_rate
     self.device = device
+    self.loss_fn = loss_fn
+    self.loss_fn_deriv = loss_fn_deriv
     self.L = len(self.layers)
     self.outs = [[] for i in  range(self.L+1)]
     self.prediction_errors = [[] for i in range(self.L+1)]
@@ -75,7 +77,7 @@ class PCNet(object):
         self.mus[i+1] = l.forward(self.mus[i])
         self.outs[i+1] = self.mus[i+1].clone()
       self.mus[-1] = label.clone() #setup final label
-      self.prediction_errors[-1] = self.mus[-1] - self.outs[-1] #setup final prediction errors
+      self.prediction_errors[-1] = self.loss_fn_deriv(self.outs[-1], self.mus[-1])#self.mus[-1] - self.outs[-1] #setup final prediction errors
       self.predictions[-1] = self.prediction_errors[-1].clone()
       for n in range(self.n_inference_steps_train):
       #reversed inference
@@ -88,7 +90,7 @@ class PCNet(object):
       #update weights
       weight_diffs = self.update_weights()
       #get loss:
-      L = torch.sum(self.prediction_errors[-1]**2).item()
+      L = self.loss_fn(self.outs[-1],self.mus[-1]).item()#torch.sum(self.prediction_errors[-1]**2).item()
       #get accuracy
       acc = accuracy(self.no_grad_forward(inp),label)
       return L,acc,weight_diffs
@@ -112,7 +114,11 @@ class PCNet(object):
       losslist = []
       print("Epoch: ", epoch)
       for i,(inp, label) in enumerate(dataset):
-        L, acc,weight_diffs = self.infer(inp.to(DEVICE),onehot(label).to(DEVICE))
+        if self.loss_fn != cross_entropy_loss:
+          label = onehot(label).to(DEVICE)
+        else:
+          label = label.long().to(DEVICE)
+        L, acc,weight_diffs = self.infer(inp.to(DEVICE),label)
         losslist.append(L)
       mean_acc, acclist = self.test_accuracy(dataset)
       accs.append(mean_acc)
@@ -144,10 +150,12 @@ class PCNet(object):
 
 
 class Backprop_CNN(object):
-  def __init__(self, layers):
+  def __init__(self, layers,loss_fn,loss_fn_deriv):
     self.layers = layers
     self.xs = [[] for i in range(len(self.layers)+1)]
     self.e_ys = [[] for i in range(len(self.layers)+1)]
+    self.loss_fn = loss_fn
+    self.loss_fn_deriv = loss_fn_deriv
     for l in self.layers:
       l.set_weight_parameters()
 
@@ -207,11 +215,16 @@ class Backprop_CNN(object):
         losslist = []
         for (i,(inp,label)) in enumerate(dataset):
           out = self.forward(inp.to(DEVICE))
-          label = onehot(label).to(DEVICE)
-          e_y = out - label
+          if self.loss_fn != cross_entropy_loss:
+            label = onehot(label).to(DEVICE)
+          else:
+            label = label.long().to(DEVICE)
+          e_y = self.loss_fn_deriv(out, label)
+          #e_y = out - label
           self.backward(e_y)
           self.update_weights(update_weight=True,sign_reverse=True)
-          loss = torch.sum(e_y**2).item()
+          #loss = torch.sum(e_y**2).item()
+          loss = self.loss_fn(out, label).item()
           losslist.append(loss)
         mean_acc, acclist = self.test_accuracy(dataset)
         accs.append(mean_acc)
@@ -242,6 +255,7 @@ if __name__ == '__main__':
     parser.add_argument("--inference_learning_rate",type=float,default=0.1)
     parser.add_argument("--network_type",type=str,default="pc")
     parser.add_argument("--dataset",type=str,default="cifar")
+    parser.add_argument("--loss_fn", type=str, default="mse")
 
     args = parser.parse_args()
     print("Args parsed")
@@ -252,6 +266,7 @@ if __name__ == '__main__':
         subprocess.call(["mkdir","-p",str(args.logdir)])
     print("folders created")
     dataset,testset = get_cnn_dataset(args.dataset,args.batch_size)
+    loss_fn, loss_fn_deriv = parse_loss_function(args.loss_fn)
 
     if args.dataset in ["cifar", "mnist","svhn"]:
         output_size = 10
@@ -275,7 +290,10 @@ if __name__ == '__main__':
     l3 = ConvLayer(14,6,16,64,5,args.learning_rate,relu,relu_deriv,device=DEVICE)
     l4 = ProjectionLayer((64,16,10,10),200,relu,relu_deriv,args.learning_rate,device=DEVICE)
     l5 = FCLayer(200,150,64,args.learning_rate,relu,relu_deriv,device=DEVICE)
-    l6 = FCLayer(150,output_size,64,args.learning_rate,linear,linear_deriv,device=DEVICE)
+    if args.loss_fn == "crossentropy":
+      l6 = FCLayer(150,output_size,64,args.learning_rate,softmax,linear_deriv,device=DEVICE)
+    else:
+      l6 = FCLayer(150,output_size,64,args.learning_rate,linear,linear_deriv,device=DEVICE)
     layers =[l1,l2,l3,l4,l5,l6]
     #l1 = ConvLayer(32,3,20,64,4,args.learning_rate,tanh,tanh_deriv,device=DEVICE)
     #l2 = ConvLayer(29,20,50,64,5,args.learning_rate,tanh,tanh_deriv,device=DEVICE)
@@ -287,9 +305,9 @@ if __name__ == '__main__':
     #l8 = FCLayer(50,10,64,args.learning_rate,linear,linear_deriv,device=DEVICE)
     #layers =[l1,l2,l3,l4,l5,l6,l7,l8]
     if args.network_type == "pc":
-        net = PCNet(layers,args.n_inference_steps,args.inference_learning_rate,device=DEVICE)
+        net = PCNet(layers,args.n_inference_steps,args.inference_learning_rate,loss_fn = loss_fn, loss_fn_deriv = loss_fn_deriv,device=DEVICE)
     elif args.network_type == "backprop":
-        net = Backprop_CNN(layers)
+        net = Backprop_CNN(layers,loss_fn = loss_fn)
     else:
         raise Exception("Network type not recognised: must be one of 'backprop', 'pc'")
     net.train(dataset[0:-2],testset[0:-2],args.N_epochs,args.n_inference_steps,args.savedir,args.logdir,args.old_savedir,args.save_every,args.print_every)

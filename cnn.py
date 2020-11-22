@@ -307,7 +307,7 @@ if __name__ == '__main__':
     if args.network_type == "pc":
         net = PCNet(layers,args.n_inference_steps,args.inference_learning_rate,loss_fn = loss_fn, loss_fn_deriv = loss_fn_deriv,device=DEVICE)
     elif args.network_type == "backprop":
-        net = Backprop_CNN(layers,loss_fn = loss_fn)
+        net = Backprop_CNN(layers,loss_fn = loss_fn,loss_fn_deriv = loss_fn_deriv)
     else:
         raise Exception("Network type not recognised: must be one of 'backprop', 'pc'")
     net.train(dataset[0:-2],testset[0:-2],args.N_epochs,args.n_inference_steps,args.savedir,args.logdir,args.old_savedir,args.save_every,args.print_every)

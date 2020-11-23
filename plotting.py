@@ -27,7 +27,7 @@ print("loading...")
 pc_path = sys.argv[1]
 backprop_path = sys.argv[2]
 title = str(sys.argv[3])
-EPOCH_NUM = 5000
+EPOCH_NUM = 47
 
 def get_results(basepath,cnn=True,merged=False):
     ### Loads results losses and accuracies files ###
@@ -42,6 +42,8 @@ def get_results(basepath,cnn=True,merged=False):
         if not merged:
             acclist.append(np.load(p + "accs.npy")[0:EPOCH_NUM])
             losslist.append(np.load(p + "losses.npy")[0:EPOCH_NUM])
+            if cnn:
+                test_acclist.append(np.load(p+"test_accs.npy")[0:EPOCH_NUM])
         else:
             acclist.append(np.load(p + "merged_accs.npy")[0:EPOCH_NUM])
             losslist.append(np.load(p + "merged_losses.npy")[0:EPOCH_NUM])
@@ -106,7 +108,7 @@ def plot_results(pc_path, backprop_path,title):
         frame.set_facecolor("1.0")
         frame.set_edgecolor("1.0")
         fig.tight_layout()
-        fig.savefig("../figures/"+title +"_"+titles[i]+"_prelim_2.jpg")
+        fig.savefig("./figures/"+title +"_"+titles[i]+"_prelim_2.jpg")
         plt.show()
 
 def plot_accs(pc_path, backprop_path,title):
@@ -145,7 +147,7 @@ def plot_accs(pc_path, backprop_path,title):
     frame.set_edgecolor("1.0")
     ax1.tick_params(axis='both',which='major',labelsize=12)
     ax1.tick_params(axis='both',which='minor',labelsize=10)
-    fig.savefig("../figures/"+title +"_CNN_prelim_2.jpg")
+    fig.savefig("./figures/"+title +"_CNN_prelim_2.jpg")
     plt.show()
 
 def plot_weight_diffs(path):
@@ -168,8 +170,8 @@ def plot_weight_diffs(path):
         ax.plot(mean_weights_list[:,i])
         plt.ylabel("Mean distance from true gradient")
         plt.xlabel("Epoch")
-        fig.savefig("../figures/cnn_weight_diff_"+str(i)+".jpg")
-        plt.show())
+        fig.savefig("./figures/cnn_weight_diff_"+str(i)+".jpg")
+        plt.show()
 
 def lstm_plot_results(pc_path, backprop_path,title,rnn=False):
     ### Plots the LSTM and RNN results ###
@@ -223,7 +225,7 @@ def lstm_plot_results(pc_path, backprop_path,title,rnn=False):
         frame.set_facecolor("1.0")
         frame.set_edgecolor("1.0")
         fig.tight_layout()
-        fig.savefig("../figures/"+title +"_"+titles[i]+"_super_prelim_6.jpg")
+        fig.savefig("./figures/"+title +"_"+titles[i]+"_super_prelim_6.jpg")
         plt.show()
         #bib
 
@@ -265,9 +267,9 @@ def merge_results(basepath, merge_name,seeds=5,cnn=False):
             np.save(basepath+base_dir + "/"+str(s)+"/merged_test_accs.npy", base_test_accs)
 
 
-if __name __ == '__main__':
+if __name__ == '__main__':
     #merge_results(pc_path,backprop_path,cnn=False)
-    #plot_results(pc_path,backprop_path,title)
+    plot_results(pc_path,backprop_path,title)
     #plot_accs(pc_path,backprop_path,title)
     #plot_weight_diffs(pc_path)
     #lstm_plot_results(pc_path, backprop_path, title,rnn=True)
